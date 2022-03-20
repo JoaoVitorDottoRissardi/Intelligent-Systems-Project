@@ -19,8 +19,8 @@ sys.path.append('pkg/planner')
 from planner import Planner
 
 ## Classe que define o Agente
-class AgentRnd:
-    def __init__(self, model):
+class AgentSearcher:
+    def __init__(self, model, batterySearcher, timeSearcher):
         """
         Construtor do agente random
         @param model referencia o ambiente onde o agente estah situado
@@ -76,6 +76,9 @@ class AgentRnd:
         self.previousAction = "nop"    ## nenhuma (no operation)
         self.expectedState = self.currentState
 
+        ## inicializa a bateria e tempo do agente vasculhador
+        self.battery = batterySearcher
+        self.time = timeSearcher
     ## Metodo que define a deliberacao do agente
     def deliberate(self):
         ## Verifica se há algum plano a ser executado
@@ -96,9 +99,9 @@ class AgentRnd:
         if not (self.currentState == self.expectedState):
             print("---> erro na execucao da acao ", self.previousAction, ": esperava estar em ", self.expectedState, ", mas estou em ", self.currentState)
 
-        ## Funcionou ou nao, vou somar o custo da acao com o total
-        self.costAll += self.prob.getActionCost(self.previousAction)
-        print ("Custo até o momento (com a ação escolhida):", self.costAll)
+        # ## Funcionou ou nao, vou somar o custo da acao com o total
+        # self.costAll += self.prob.getActionCost(self.previousAction)
+        # print ("Custo até o momento (com a ação escolhida):", self.costAll)
 
         ## Verifica se atingiu o estado objetivo
         ## Poderia ser outra condição, como atingiu o custo máximo de operação
@@ -118,9 +121,23 @@ class AgentRnd:
         print("Ag deliberou pela acao: ", result[0], " o estado resultado esperado é: ", result[1])
 
         ## Executa esse acao, atraves do metodo executeGo
-        self.executeGo(result[0])
-        self.previousAction = result[0]
-        self.expectedState = result[1]
+        self.executeGo(result[0][0])
+        self.previousAction = result[0][0]
+        self.expectedState = result[0][1]
+
+        self.battery -= result[1]
+        self.time -= result[2]
+
+        if self.battery <= 0:
+            print("Agente sem Bateria")
+            del self.libPlan[0]
+            print(result[3])
+
+        if self.time <= 0:
+            print("Tempo expirado")
+            del self.libPlan[0]
+            for i in range(self.model.rows):
+                print(result[3][i])
 
         return 1
 

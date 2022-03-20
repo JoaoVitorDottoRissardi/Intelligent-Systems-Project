@@ -1,6 +1,5 @@
 
 from state import State
-from compass import Compass
 
 class SearchPlan:
     def __init__(self, maxRows, maxColumns, goal, initialState, name = "none", mesh = "square"):
@@ -21,15 +20,30 @@ class SearchPlan:
             for j in range(maxColumns):
                 self.untried[i].append(["N", "S", "L", "O", "NE", "SO", "NO", "SE"])
 
-        self.results = []
-        for i in range(maxRows):
-            self.results.append([])
-            for j in range(maxColumns):
-                self.results[i].append([])
-                for k in range(8):
-                    self.results[i][j].append([i,j])
+        # self.map = []
+        # for i in range(maxRows):
+        #     self.map.append([])
+        #     for j in range(maxColumns):
+        #         self.map[i].append([])
+        #         for k in range(8):
+        #             self.map[i][j].append([i,j])
 
-        self.compass = Compass()
+        self.map = []
+        for i in range(maxRows):
+            self.map.append([])
+            for j in range(maxColumns):
+                self.map[i].append(0)
+        self.map[self.initialState.row][self.initialState.col] = 1
+
+        self.compass = { "N" : (0, "S", 1),
+                         "S" : (1, "N", 0),
+                         "L" : (2, "O", 3),
+                         "O" : (3, "L", 2),
+                         "NE" : (4, "SO", 5),
+                         "SO" : (5, "NE", 4),
+                         "NO" : (6, "SE", 7),
+                         "SE" : (7, "NO", 6)
+                        }
 
     def setWalls(self, walls):
         row = 0
@@ -81,18 +95,18 @@ class SearchPlan:
     def setNextPosition(self):
 
          movDirection = self.untried[self.currentState.row][self.currentState.col].pop(0)
-         movePos = { "N" : (-1, 0, 0),
-                    "S" : (1, 0, 1),
-                    "L" : (0, 1, 2),
-                    "O" : (0, -1, 3),
-                    "NE" : (-1, 1, 4),
-                    "SO" : (1, -1, 5),
-                    "NO" : (-1, -1, 6),
-                    "SE" : (1, 1, 7)
+         movePos = { "N" : (-1, 0),
+                    "S" : (1, 0),
+                    "L" : (0, 1),
+                    "O" : (0, -1),
+                    "NE" : (-1, 1),
+                    "SO" : (1, -1),
+                    "NO" : (-1, -1),
+                    "SE" : (1, 1)
                     }
          state = State(self.currentState.row + movePos[movDirection][0], self.currentState.col + movePos[movDirection][1])
 
-         return movDirection, state, movePos[movDirection][2]
+         return movDirection, state
 
 
     def chooseAction(self):
@@ -103,13 +117,32 @@ class SearchPlan:
 
         ## Tenta encontrar um movimento possivel dentro do tabuleiro
         result = self.setNextPosition()
+        batteryCost = 0
+        timeCost = 0
 
         while not self.isPossibleToMove(result[1]):
+            if(self.compass[result[0]][0] < 4):
+                batteryCost += 1
+                timeCost += 1
+            else:
+                batteryCost += 1.5
+                timeCost += 1.5
             result = self.setNextPosition()
 
-        self.results[self.currentState.row][self.currentState.row][result[2]] = 1
-        self.untried[result[1].row][result[1].col].remove(self.compass.opposite(result[0]))
-        return result
+        self.map[result[1].row][result[1].col] = 1
+        # self.map[self.currentState.row][self.currentState.row][self.compass[result[0]][0]] = [result[1].row, result[1].col]
+        # self.map[result[1].row][result[1].col][self.compass[result[0]][2]] = [self.currentState.row, self.currentState.col]
+
+        self.untried[result[1].row][result[1].col].remove(self.compass[result[0]][1])
+
+        if(self.compass[result[0]][0] < 4):
+            batteryCost += 1
+            timeCost += 1
+        else:
+            batteryCost += 1.5
+            timeCost += 1.5
+
+        return result, batteryCost, timeCost, self.map
 
 
     def do(self):
