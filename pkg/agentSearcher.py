@@ -105,9 +105,9 @@ class AgentSearcher:
 
         ## Verifica se atingiu o estado objetivo
         ## Poderia ser outra condição, como atingiu o custo máximo de operação
-        if self.prob.goalTest(self.currentState):
-            print("!!! Objetivo atingido !!!")
-            del self.libPlan[0]  ## retira plano da biblioteca
+        # if self.prob.goalTest(self.currentState):
+        #     print("!!! Objetivo atingido !!!")
+        #     del self.libPlan[0]  ## retira plano da biblioteca
 
         ## Verifica se tem vitima na posicao atual
         victimId = self.victimPresenceSensor()

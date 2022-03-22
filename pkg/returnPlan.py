@@ -30,11 +30,20 @@ class ReturnPlan:
     def updateCurrentState(self, state):
          self.currentState = state
 
-    def setNextPosition(self):
+    def updateMap(self, map):
+        self.map = map
 
+    def getNeighbors(self):
+        # TODO!
 
-    def chooseAction(self):
-        
+    def turnMatrixToGraph(self):
+        # TODO!
+
+    def findPath(self):
+        # TODO!
+
+    def calculateHeuristic(self, row, col):
+        return sqrt((row - self.goalPos.row)*(row - self.goalPos.row) + (col - self.goalPos.col)*(col - self.goalPos.col))
 
     def do(self):
         """
