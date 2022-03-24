@@ -13,6 +13,7 @@ from random import randint
 ## Importa o algoritmo para o plano
 from randomPlan import RandomPlan
 from searchPlan import SearchPlan
+from returnPlan import ReturnPlan
 
 ##Importa o Planner
 sys.path.append('pkg/planner')
@@ -115,6 +116,10 @@ class AgentSearcher:
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " sinais vitais: ", self.victimVitalSignalsSensor(victimId))
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " dif de acesso: ", self.victimDiffOfAcessSensor(victimId))
 
+
+        returnPlan = ReturnPlan(self.model.rows, self.model.columns, self.prob.initialState, self.currentState, result[3], "goal", self.mesh )
+        returnPlan.findPath()
+        
         ## Define a proxima acao a ser executada
         ## currentAction eh uma tupla na forma: <direcao>, <state>
         result = self.plan.chooseAction()
@@ -127,6 +132,8 @@ class AgentSearcher:
 
         self.battery -= result[1]
         self.time -= result[2]
+
+
 
         if self.battery <= 0:
             print("Agente sem Bateria")

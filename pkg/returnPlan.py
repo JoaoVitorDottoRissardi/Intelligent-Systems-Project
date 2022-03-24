@@ -1,9 +1,39 @@
-
-from pkg.grafo import Graph
+from queue import PriorityQueue
 from state import State
 
+class Node:
+    def __init__(self, position):
+        self.position = position
+        self.neighbors = []
+
+    def updateNeighbors(self, map):
+        self.neighbors = []
+        if self.position.row < len(map) - 1 and map[self.position.row + 1][self.position.col] == 1:
+            self.neighbors.append(State(self.position.row + 1, self.position.col)) #SOUTH
+
+        if self.position.row > 0 and map[self.position.row - 1][self.position.col] == 1:
+            self.neighbors.append(State(self.position.row - 1, self.position.col)) #NORTH
+
+        if self.position.col < len(map[0]) - 1 and map[self.position.row][self.position.col + 1] == 1:
+            self.neighbors.append(State(self.position.row, self.position.col + 1)) #EAST
+
+        if self.position.row > 0 and map[self.position.row][self.position.col - 1] == 1:
+            self.neighbors.append(State(self.position.row, self.position.col - 1)) #WEST
+
+        if self.position.row < len(map) - 1 and self.position.col < len(map[0]) - 1 and map[self.position.row + 1][self.position.col + 1] == 1:
+            self.neighbors.append(State(self.position.row + 1, self.position.col + 1)) #SOUTHEAST
+
+        if self.position.row > 0 and self.position.col < len(map[0]) - 1 and map[self.position.row - 1][self.position.col + 1] == 1:
+            self.neighbors.append(State(self.position.row - 1, self.position.col + 1)) #NORTHEAST
+
+        if self.position.row < len(map) - 1 and self.position.col > 0 and map[self.position.row + 1][self.position.col - 1] == 1:
+            self.neighbors.append(State(self.position.row + 1, self.position.col - 1)) #SOUTHWEST
+
+        if self.position.row > 0 and self.position.col > 0 and map[self.position.row - 1][self.position.col - 1] == 1:
+            self.neighbors.append(State(self.position.row - 1, self.position.col - 1)) #NORTHWEST
+
 class ReturnPlan:
-    def __init__(self, maxRows, maxColumns, goal, initialState, name = "none", mesh = "square", map):
+    def __init__(self, maxRows, maxColumns, goal, initialState, map, name = "none", mesh = "square"):
         """
         Define as variaveis necessárias para a utilização do search plan por um unico agente.
         """
@@ -15,7 +45,6 @@ class ReturnPlan:
         self.goalPos = goal
         self.actions = []
         self.map = map
-        self.graph = Graph(maxRows*maxColumns)
 
     def setWalls(self, walls):
         row = 0
@@ -36,10 +65,43 @@ class ReturnPlan:
         self.map = map
 
     def getNeighbors(self):
-        # TODO!
+        pass
 
-    def findPath(self):
-        # TODO!
+    def matrixToGraph(self):
+        pass
+
+    def aStarSearch(self):
+
+        nodeDict = {}
+        for i in range(self.maxRows):
+            for j in range(self.maxColumns):
+                if(self.map[i][j] == 1):
+                    node = Node(State(i,j))
+                    node.updateNeighbors(self.map)
+                    key = str(i) + ';' + str(j)
+                    nodeDict.update({key: node})
+
+        count = 0
+        openList = PriorityQueue()
+        key = str(self.initialState.row) + ';' + str(self.initialState.col)
+        openList.put((0, count, nodeDict[key]))
+        cameFrom = {}
+        gValue = {spot: float("inf") for i in range(self.maxRows) for j in range(self.maxColumns)}
+        gValue[self.initialState] = 0
+        fValue = {spot: float("inf") for i in range(self.maxRows) for j in range(self.maxColumns)}
+        fValue[self.initialState] = calculateHeuristic(self.initialState.row, self.initialState.col)
+
+        openListHash = {self.initialState}
+
+        while not openList.empty():
+            current = openList.get()[2]
+            openListHash.remove(current.position)
+
+            if current == goalPos:
+                return True
+
+            #for neighbors in current.neighbors:
+
 
     def calculateHeuristic(self, row, col):
         return sqrt((row - self.goalPos.row)*(row - self.goalPos.row) + (col - self.goalPos.col)*(col - self.goalPos.col))
