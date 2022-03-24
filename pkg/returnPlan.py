@@ -1,4 +1,5 @@
 
+from pkg.grafo import Graph
 from state import State
 
 class ReturnPlan:
@@ -14,6 +15,7 @@ class ReturnPlan:
         self.goalPos = goal
         self.actions = []
         self.map = map
+        self.graph = Graph(maxRows*maxColumns)
 
     def setWalls(self, walls):
         row = 0
@@ -34,9 +36,6 @@ class ReturnPlan:
         self.map = map
 
     def getNeighbors(self):
-        # TODO!
-
-    def turnMatrixToGraph(self):
         # TODO!
 
     def findPath(self):
