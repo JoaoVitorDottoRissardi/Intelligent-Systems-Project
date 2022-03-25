@@ -3,7 +3,7 @@
 ### Agente que fixa um objetivo aleatório e anda aleatoriamente pelo labirinto até encontrá-lo.
 ### Executa raciocíni on-line: percebe --> [delibera] --> executa ação --> percebe --> ...
 import sys
-
+import numpy as np
 ## Importa Classes necessarias para o funcionamento
 from model import Model
 from problem import Problem
@@ -14,6 +14,7 @@ from random import randint
 from randomPlan import RandomPlan
 from searchPlan import SearchPlan
 from returnPlan import ReturnPlan
+from returnPlan import Node
 
 ##Importa o Planner
 sys.path.append('pkg/planner')
@@ -80,6 +81,12 @@ class AgentSearcher:
         ## inicializa a bateria e tempo do agente vasculhador
         self.battery = batterySearcher
         self.time = timeSearcher
+
+        self.map = []
+        for i in range(self.model.rows):
+            self.map.append([])
+            for j in range(self.model.columns):
+                self.map[i].append(0)
     ## Metodo que define a deliberacao do agente
     def deliberate(self):
         ## Verifica se há algum plano a ser executado
@@ -116,10 +123,14 @@ class AgentSearcher:
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " sinais vitais: ", self.victimVitalSignalsSensor(victimId))
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " dif de acesso: ", self.victimDiffOfAcessSensor(victimId))
 
+        # Calcula o melhor caminho para retornar e avalia se precisa executá-lo ao não
+        goalNode = Node(self.prob.initialState)
+        returnPlan = ReturnPlan(self.model.rows, self.model.columns, self.prob.initialState, self.currentState, self.map, "goal", self.mesh )
+        returnPath = returnPlan.findPath()
+        if(returnPath[goalNode.position][1] > self.battery or returnPath[goalNode.position][1] > self.time):
+            returnMoves = returnPlan.makePath(returnPath, goalNode)
 
-        returnPlan = ReturnPlan(self.model.rows, self.model.columns, self.prob.initialState, self.currentState, result[3], "goal", self.mesh )
-        returnPlan.findPath()
-        
+
         ## Define a proxima acao a ser executada
         ## currentAction eh uma tupla na forma: <direcao>, <state>
         result = self.plan.chooseAction()
@@ -132,19 +143,21 @@ class AgentSearcher:
 
         self.battery -= result[1]
         self.time -= result[2]
-
+        self.map = result[3]
 
 
         if self.battery <= 0:
             print("Agente sem Bateria")
             del self.libPlan[0]
-            print(result[3])
+            for i in range(self.model.rows):
+                print(self.map[i])
 
         if self.time <= 0:
             print("Tempo expirado")
             del self.libPlan[0]
             for i in range(self.model.rows):
-                print(result[3][i])
+                print(self.map[i])
+
 
         return 1
 

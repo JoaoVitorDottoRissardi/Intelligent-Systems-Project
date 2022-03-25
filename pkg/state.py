@@ -11,12 +11,18 @@ class State:
         self.row = row
         self.col = col
 
+    def __hash__(self):
+        return hash((self.row, self.col))
+
+    def __ne__(self, other):
+        return not(self == other)
+
     def __eq__(self, other):
         if self.row == other.row and self.col == other.col:
             return True
         else:
             return False
 
-    def __str__(self): 
+    def __str__(self):
         # Permite fazer um print(state) diretamente
         return "({0:d}, {1:d})".format(self.row, self.col)
