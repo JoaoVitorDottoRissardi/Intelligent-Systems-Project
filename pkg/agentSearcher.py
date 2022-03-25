@@ -127,8 +127,8 @@ class AgentSearcher:
         goalNode = Node(self.prob.initialState)
         returnPlan = ReturnPlan(self.model.rows, self.model.columns, self.prob.initialState, self.currentState, self.map, "goal", self.mesh )
         returnPath = returnPlan.findPath()
-        if(returnPath[goalNode.position][1] > self.battery or returnPath[goalNode.position][1] > self.time):
-            returnMoves = returnPlan.makePath(returnPath, goalNode)
+        # if(returnPath[goalNode.position][1] > self.battery or returnPath[goalNode.position][1] > self.time):
+        #     returnMoves = returnPlan.makePath(returnPath, goalNode)
 
 
         ## Define a proxima acao a ser executada
