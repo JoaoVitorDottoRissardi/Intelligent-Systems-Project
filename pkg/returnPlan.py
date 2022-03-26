@@ -44,6 +44,16 @@ class ReturnPlan:
         self.initialState = initialState
         self.goalPos = goal
         self.map = map
+        self.returnPath = []
+        self.compass = { "N" : (-1,0),
+                         "S" : (1,0),
+                         "L" : (1,0),
+                         "O" : (-1,0),
+                         "NE" : (-1,1),
+                         "SO" : (1,-1),
+                         "NO" : (-1,-1),
+                         "SE" : (1,1)
+                        }
 
     def setWalls(self, walls):
         row = 0
@@ -56,14 +66,17 @@ class ReturnPlan:
                 col += 1
             row += 1
 
+    def updateMap(self, map):
+        self.map = map
+
+    def updateCurrentState(self, state):
+        self.initialState = state
+
     def calculateHeuristic(self, row, col):
         return sqrt((row - self.goalPos.row)*(row - self.goalPos.row) + (col - self.goalPos.col)*(col - self.goalPos.col))
 
     def findPath(self):
-
         cameFrom = {}
-        # print(str(self.initialState.row) + ";" + str(self.initialState.col))
-        # print(str(self.goalPos.row) + ";" + str(self.goalPos.col))
         if self.initialState == self.goalPos:
             return cameFrom
 
@@ -102,24 +115,38 @@ class ReturnPlan:
                         openList.put((fValue[neighbor[0]], count, nodeDict[neighbor[0]]))
                         openListHash.add(neighbor[0])
 
-    def makePath(self, cameFrom, current):
+    def makePath(self, cameFrom, start, current):
         moveStack = []
         movePos = {(-1, 0) : "N",
-                   (1, 0) : "S",
-                   (0, 1): "L",
-                   (0, -1) : "O",
-                   (-1, 1) : "NE",
-                   (1, -1) : "SO",
-                   (-1, -1) : "NO",
-                   (1, 1) : "SE"
-                   }
-        if current in cameFrom[0]:
+                (1, 0) : "S",
+                (0, 1): "L",
+                (0, -1) : "O",
+                (-1, 1) : "NE",
+                (1, -1) : "SO",
+                (-1, -1) : "NO",
+                (1, 1) : "SE"
+                }
+        while current.position != start:
             direction = (current.position.row - cameFrom[current.position][0].position.row, current.position.col - cameFrom[current.position][0].position.col)
             moveStack.append(movePos[direction])
             current = cameFrom[current.position][0]
 
-        return moveStack
+        self.returnPath = moveStack
 
+
+    def chooseAction(self):
+        nextMove = self.returnPath.pop()
+        result = (nextMove, State(self.initialState.row + self.compass[nextMove][0], self.initialState.col + self.compass[nextMove][1]))
+        batteryCost = 0
+        timeCost = 0
+        if(self.compass[result[0]][0] < 4):
+            batteryCost += 1
+            timeCost += 1
+        else:
+            batteryCost += 1.5
+            timeCost += 1.5
+
+        return result, batteryCost, timeCost, self.map
 
     def do(self):
         """

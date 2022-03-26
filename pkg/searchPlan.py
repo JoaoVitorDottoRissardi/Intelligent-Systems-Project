@@ -20,21 +20,7 @@ class SearchPlan:
             for j in range(maxColumns):
                 self.untried[i].append(["N", "S", "L", "O", "NE", "SO", "NO", "SE"])
 
-        # self.map = []
-        # for i in range(maxRows):
-        #     self.map.append([])
-        #     for j in range(maxColumns):
-        #         self.map[i].append([])
-        #         for k in range(8):
-        #             self.map[i][j].append([i,j])
-
         self.map = []
-        for i in range(maxRows):
-            self.map.append([])
-            for j in range(maxColumns):
-                self.map[i].append(0)
-        self.map[self.initialState.row][self.initialState.col] = 1
-
         self.compass = { "N" : (0, "S", 1),
                          "S" : (1, "N", 0),
                          "L" : (2, "O", 3),
@@ -56,6 +42,8 @@ class SearchPlan:
                 col += 1
             row += 1
 
+    def updateMap(self, map):
+        self.map = map
 
     def updateCurrentState(self, state):
          self.currentState = state
@@ -105,8 +93,11 @@ class SearchPlan:
                     "SE" : (1, 1)
                     }
          state = State(self.currentState.row + movePos[movDirection][0], self.currentState.col + movePos[movDirection][1])
-
-         return movDirection, state
+         hitWall = 0
+         if not self.isPossibleToMove(state):
+             state = self.currentState
+             hitWall = 1
+         return movDirection, state, hitWall
 
 
     def chooseAction(self):
@@ -117,30 +108,20 @@ class SearchPlan:
 
         ## Tenta encontrar um movimento possivel dentro do tabuleiro
         result = self.setNextPosition()
-        batteryCost = 0
-        timeCost = 0
-
-        while not self.isPossibleToMove(result[1]):
-            if(self.compass[result[0]][0] < 4):
-                batteryCost += 1
-                timeCost += 1
-            else:
-                batteryCost += 1.5
-                timeCost += 1.5
-            result = self.setNextPosition()
 
         self.map[result[1].row][result[1].col] = 1
         # self.map[self.currentState.row][self.currentState.row][self.compass[result[0]][0]] = [result[1].row, result[1].col]
         # self.map[result[1].row][result[1].col][self.compass[result[0]][2]] = [self.currentState.row, self.currentState.col]
 
-        self.untried[result[1].row][result[1].col].remove(self.compass[result[0]][1])
+        if self.compass[result[0]][1] in self.untried[result[1].row][result[1].col] and not result[2]:
+            self.untried[result[1].row][result[1].col].remove(self.compass[result[0]][1])
 
         if(self.compass[result[0]][0] < 4):
-            batteryCost += 1
-            timeCost += 1
+            batteryCost = 1
+            timeCost = 1
         else:
-            batteryCost += 1.5
-            timeCost += 1.5
+            batteryCost = 1.5
+            timeCost = 1.5
 
         return result, batteryCost, timeCost, self.map
 
