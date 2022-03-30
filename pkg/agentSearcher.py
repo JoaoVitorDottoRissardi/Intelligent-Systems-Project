@@ -172,6 +172,10 @@ class AgentSearcher:
         ## currentAction eh uma tupla na forma: <direcao>, <state>
         result = self.plan.chooseAction()
 
+        if result[0][0] ==  "ST":
+            print("Sem movimentos possiveis ; Passando para o agente socorrista")
+            return -1
+
         # Caso a ação escolhida vá deixar o agente sem tempo e ele estiver na base encerra execução
         if (self.time - (2*result[2])) <= 0 and self.currentState == self.prob.initialState:
             print("Tempo expirado ; Passando as informacoes para o agente socorrista")

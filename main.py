@@ -60,7 +60,7 @@ def main():
     agentSearcher.deliberate()
     while agentSearcher.deliberate() != -1:
         model.draw()
-        time.sleep(0.01) # para dar tempo de visualizar as movimentacoes do agente no labirinto
+        time.sleep(0.005) # para dar tempo de visualizar as movimentacoes do agente no labirinto
     model.draw()
 
     # victimsQueue = agentSearcher.getVictimsQueue()

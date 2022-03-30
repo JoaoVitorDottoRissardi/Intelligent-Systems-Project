@@ -12,7 +12,7 @@ class MapSquare:
         @param posBegin: Posicao de inicio
         @param load: Nome do arquivo que contem o mapa inicial (com os objetos e suas posicoes)
         """
-        
+
         self.width = width
         self.heigth = heigth
         self.screen = screen
@@ -30,7 +30,7 @@ class MapSquare:
 
         ## Variavel que armazena o arquivo que contem o mapa inicial
         self.load = load
-        
+
         ## Chama o metodo para gerar a malha
         self.generateMap()
 
@@ -62,48 +62,58 @@ class MapSquare:
                 ## O formato de cada linha é:
                 ## Nome x,y x,y x,y
                 values = line.split(" ")
-                ## O primeiro dado é o nome do objeto, seguido por varias posicoes 
-                things[values.pop(0)] = values
+                # print(values)
+                ## O primeiro dado é o nome do objeto, seguido por varias posicoes
+                if(values[0] == "Parede"):
+                    things[values.pop(0)] = values
+                elif(values[0] == "Vitima"):
+                    things[("Vitima", values[1])] = str(values[1])
 
             ## Percorre os elementos que foram definidos
             for i in things:
+                # print(i)
                 for j in things[i]:
-                    pos = j.split(",")
+                    if i == "Parede":
+                        pos = j.split(",")
                     ## Define que naquela posicao vai ter determinado objeto
-                    self.listPlaces[int(pos[0])][int(pos[1])].itemInside = i
+                        self.listPlaces[int(pos[0])][int(pos[1])].itemInside = i
                     ## Atualiza a cor do lugar
-                    self.listPlaces[int(pos[0])][int(pos[1])].updateColor()
-
+                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor()
+                    else:
+                        pos = things[i].split(",")
+                        self.listPlaces[int(pos[0])][int(pos[1])].itemInside = i[0]
+                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor()
+                        break
             ## Seta as posicoes do robo e do objetivo
-            if "Agente" in things:
-                pos = things["Agente"][0].split(",")
-                self.posAgent = (int(pos[0]), int(pos[1]))
-            if "Objetivo" in things:
-                pos = things["Objetivo"][0].split(",")
-                self.posGoal = (int(pos[0]), int(pos[1]))
+            # if "Agente" in things:
+            #     pos = things["Agente"][0].split(",")
+            #     self.posAgent = (int(pos[0]), int(pos[1]))
+            # if "Objetivo" in things:
+            #     pos = things["Objetivo"][0].split(",")
+            #     self.posGoal = (int(pos[0]), int(pos[1]))
 
 
     ## Metodo que verifica o clique do mouse
-   
+
     def checkClick(self, posMouse):
 
         ## Se já tiver selecionado um quadrado antes
-        
+
         if self.selectPlace != False:
             obj = self.selectPlace.checkClickItens(posMouse)
             if obj != False:
-                if obj.itemInside == "Agente":                   
+                if obj.itemInside == "Agente":
                     self.listPlaces[self.posAgent[0]][self.posAgent[1]].agent = False
                     self.posAgent = obj.ide
                     obj.agent = True
                 elif obj.itemInside == "Objetivo":
-                    
+
                     self.listPlaces[self.posGoal[0]][self.posGoal[1]].goal = False
                     self.posGoal = obj.ide
                     obj.goal = True
                 obj.itemInside = False
             self.selectPlace = False
-            return True  
+            return True
         else:
             ## Se não, verifica os quadrados e ve se algum deles foi clicado
             for i in self.listPlaces:
@@ -151,7 +161,7 @@ class MapSquare:
             config += i + " " + things[i] + "\n"
         ## Pega a data e hora atual, para gerar sempre um nome diferente para cada arquivo
         today = datetime.now()
-        name = str(today.year) + "" + str(today.month) + "" + str(today.day) + "" + str(today.hour) + "" + str(today.minute) 
+        name = str(today.year) + "" + str(today.month) + "" + str(today.day) + "" + str(today.hour) + "" + str(today.minute)
         ## Salva o arquivo
         fil = open(os.path.join("config_data" ,name+".txt"), "w")
         fil.write(config)

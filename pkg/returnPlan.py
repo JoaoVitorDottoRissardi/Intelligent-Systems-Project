@@ -47,8 +47,8 @@ class ReturnPlan:
         self.returnPath = []
         self.compass = { "N" : (-1,0),
                          "S" : (1,0),
-                         "L" : (1,0),
-                         "O" : (-1,0),
+                         "L" : (0,1),
+                         "O" : (0,-1),
                          "NE" : (-1,1),
                          "SO" : (1,-1),
                          "NO" : (-1,-1),
@@ -139,9 +139,10 @@ class ReturnPlan:
     def chooseAction(self):
         nextMove = self.returnPath.pop()
         result = (nextMove, State(self.initialState.row + self.compass[nextMove][0], self.initialState.col + self.compass[nextMove][1]))
+        print(result[1])
         batteryCost = 0
         timeCost = 0
-        if(self.compass[result[0]][0] < 4):
+        if(result[0] == "N" or result[0] == "S" or result[0] == "L" or result[0] == "O"):
             batteryCost += 1
             timeCost += 1
         else:

@@ -89,20 +89,26 @@ class SearchPlan:
 
     def setNextPosition(self):
 
+        movePos = { "N" : (-1, 0),
+                "S" : (1, 0),
+                "L" : (0, 1),
+                "O" : (0, -1),
+                "NE" : (-1, 1),
+                "SO" : (1, -1),
+                "NO" : (-1, -1),
+                "SE" : (1, 1),
+                "ST" : (0, 0)
+                }
+
         if self.untried[self.currentState.row][self.currentState.col]:
             movDirection = self.untried[self.currentState.row][self.currentState.col].pop(0)
-            movePos = { "N" : (-1, 0),
-                    "S" : (1, 0),
-                    "L" : (0, 1),
-                    "O" : (0, -1),
-                    "NE" : (-1, 1),
-                    "SO" : (1, -1),
-                    "NO" : (-1, -1),
-                    "SE" : (1, 1)
-                    }
+
 
         elif self.unbacktracked[self.currentState.row][self.currentState.col]:
             movDirection = self.unbacktracked[self.currentState.row][self.currentState.col].pop(0)
+
+        else:
+            movDirection = "ST"
 
         state = State(self.currentState.row + movePos[movDirection][0], self.currentState.col + movePos[movDirection][1])
 
@@ -122,12 +128,17 @@ class SearchPlan:
         ## Tenta encontrar um movimento possivel dentro do tabuleiro
         result = self.setNextPosition()
 
+        if result[0] == "ST":
+            return result, 0, 1, self.map
+
         self.map[result[1].row][result[1].col] = 1
         # self.map[self.currentState.row][self.currentState.row][self.compass[result[0]][0]] = [result[1].row, result[1].col]
         # self.map[result[1].row][result[1].col][self.compass[result[0]][2]] = [self.currentState.row, self.currentState.col]
 
         if self.compass[result[0]][1] in self.untried[result[1].row][result[1].col] and not result[2]:
             self.untried[result[1].row][result[1].col].remove(self.compass[result[0]][1])
+
+        if not result[2]:
             self.unbacktracked[result[1].row][result[1].col].append(self.compass[result[0]][1])
 
         if(self.compass[result[0]][0] < 4):

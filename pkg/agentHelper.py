@@ -99,11 +99,7 @@ class AgentHelper:
 
             self.currentState = self.positionSensor()
 
-            if self.victimsQueue:
-                victimPos = self.victimsQueue.pop(0)
-            else:
-                print("Nenhuma vitima restante para salvamento. Encerrando execucao")
-                return -1
+            victimPos = self.victimsQueue.pop(0)
 
             victimNode = Node(victimPos)
             self.plan.updateGoal(victimPos)
@@ -155,20 +151,31 @@ class AgentHelper:
                 self.time -= 0.5
                 self.walkPath(victimPos)
 
+            if not self.victimsQueue:
+                print("Nenhuma vitima restante para salvamento. Retornando para casa")
+                homeNode = Node(self.prob.initialState)
+                self.plan.updateGoal(self.prob.initialState)
+                self.plan.updateInitialState(self.currentState)
+                homePath = self.plan.findPath()
+                goalNode = Node(self.prob.initialState)
+                self.plan.makePath(homePath, self.currentState, goalNode)
+                self.walkPath(self.prob.initialState)
+                break
+
         print("Tempo expirado ; Encerrando execucao")
-        print(self.moves)
+        #print(self.moves)
         self.currentState = self.prob.initialState
 
     def walkPath(self, goal):
-        print(goal)
-        print(self.currentState)
+        # print(goal)
+        # print(self.currentState)
 
         while self.currentState != goal:
 
             result = self.plan.chooseAction()
             self.executeGo(result[0][0])
             self.moves.append(result[0][0])
-            print(result[0][0])
+            # print(result[0][0])
             self.battery -= result[1]
             self.time -= result[2]
             self.currentState = self.positionSensor()
