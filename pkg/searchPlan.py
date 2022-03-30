@@ -20,6 +20,13 @@ class SearchPlan:
             for j in range(maxColumns):
                 self.untried[i].append(["N", "S", "L", "O", "NE", "SO", "NO", "SE"])
 
+
+        self.unbacktracked = []
+        for i in range(maxRows):
+            self.unbacktracked.append([])
+            for j in range(maxColumns):
+                self.unbacktracked[i].append([])
+
         self.map = []
         self.compass = { "N" : (0, "S", 1),
                          "S" : (1, "N", 0),
@@ -82,8 +89,9 @@ class SearchPlan:
 
     def setNextPosition(self):
 
-         movDirection = self.untried[self.currentState.row][self.currentState.col].pop(0)
-         movePos = { "N" : (-1, 0),
+        if self.untried[self.currentState.row][self.currentState.col]:
+            movDirection = self.untried[self.currentState.row][self.currentState.col].pop(0)
+            movePos = { "N" : (-1, 0),
                     "S" : (1, 0),
                     "L" : (0, 1),
                     "O" : (0, -1),
@@ -92,12 +100,17 @@ class SearchPlan:
                     "NO" : (-1, -1),
                     "SE" : (1, 1)
                     }
-         state = State(self.currentState.row + movePos[movDirection][0], self.currentState.col + movePos[movDirection][1])
-         hitWall = 0
-         if not self.isPossibleToMove(state):
-             state = self.currentState
-             hitWall = 1
-         return movDirection, state, hitWall
+
+        elif self.unbacktracked[self.currentState.row][self.currentState.col]:
+            movDirection = self.unbacktracked[self.currentState.row][self.currentState.col].pop(0)
+
+        state = State(self.currentState.row + movePos[movDirection][0], self.currentState.col + movePos[movDirection][1])
+
+        hitWall = 0
+        if not self.isPossibleToMove(state):
+            state = self.currentState
+            hitWall = 1
+        return movDirection, state, hitWall
 
 
     def chooseAction(self):
@@ -115,6 +128,7 @@ class SearchPlan:
 
         if self.compass[result[0]][1] in self.untried[result[1].row][result[1].col] and not result[2]:
             self.untried[result[1].row][result[1].col].remove(self.compass[result[0]][1])
+            self.unbacktracked[result[1].row][result[1].col].append(self.compass[result[0]][1])
 
         if(self.compass[result[0]][0] < 4):
             batteryCost = 1

@@ -22,10 +22,8 @@ class Model:
         self.mesh = mesh
 
         ## Seta a posicao do agente
-        self.agentPos = [0,0]
-        ## Seta a posicao do objetivo
-        self.goalPos = [0,0]
-
+        self.agentSearcherPos = [rows,0]
+        self.agentHelperPos = [rows,0]
         ## Cria a view
         self.view = View(self)
         ## Cria o labirinto
@@ -85,7 +83,7 @@ class Model:
 
 
     ## Metodo que atualiza a posicao do agente
-    def setAgentPos(self, row, col):
+    def setagentSearcherPos(self, row, col):
         """Utilizada para colocar o agente em uma posicao especifica do ambiente
         @param row: a linha onde o agente será situado.
         @param col: a coluna onde o agente será situado.
@@ -98,64 +96,116 @@ class Model:
         if self.maze.walls[row][col] == 1:
             return -1
 
-        self.agentPos[0] = row
-        self.agentPos[1] = col
+        self.agentSearcherPos[0] = row
+        self.agentSearcherPos[1] = col
         return 1
 
-    ## Metodo que define a posicao do objetivo
-    def setGoalPos(self, row, col):
-        """Utilizada para colocar o objetivo na posição inicial.
-        @param row: a linha onde o objetivo será situado.
-        @param col: a coluna onde o objetivo será situado.
+    def setagentHelperPos(self, row, col):
+        """Utilizada para colocar o agente em uma posicao especifica do ambiente
+        @param row: a linha onde o agente será situado.
+        @param col: a coluna onde o agente será situado.
         @return 1 se o posicionamento é possível, -1 se não for."""
         if (col < 0 or row < 0):
             return -1
         if (col >= self.maze.maxColumns or row >= self.maze.maxRows):
             return -1
+
         if self.maze.walls[row][col] == 1:
             return -1
 
-        self.goalPos[0] = row
-        self.goalPos[1] = col
+        self.agentHelperPos[0] = row
+        self.agentHelperPos[1] = col
         return 1
+    ## Metodo que define a posicao do objetivo
+    # def setGoalPos(self, row, col):
+    #     """Utilizada para colocar o objetivo na posição inicial.
+    #     @param row: a linha onde o objetivo será situado.
+    #     @param col: a coluna onde o objetivo será situado.
+    #     @return 1 se o posicionamento é possível, -1 se não for."""
+    #     if (col < 0 or row < 0):
+    #         return -1
+    #     if (col >= self.maze.maxColumns or row >= self.maze.maxRows):
+    #         return -1
+    #     if self.maze.walls[row][col] == 1:
+    #         return -1
+    #
+    #     self.goalPos[0] = row
+    #     self.goalPos[1] = col
+    #     return 1
 
     ## Metodo que executa a acao de movimento do plano
-    def go(self, action):
+    def goSearcher(self, action):
         """
             Esse metodo deve ser alterado de acordo com o action a ser passado
         """
         #result = plan.do()
         #step = result[0]
         if action == "N":
-            row = self.agentPos[0] - 1
-            col = self.agentPos[1]
+            row = self.agentSearcherPos[0] - 1
+            col = self.agentSearcherPos[1]
         elif action == "S":
-            row = self.agentPos[0] + 1
-            col = self.agentPos[1]
+            row = self.agentSearcherPos[0] + 1
+            col = self.agentSearcherPos[1]
         elif action == "O":
-            row = self.agentPos[0]
-            col = self.agentPos[1] - 1
+            row = self.agentSearcherPos[0]
+            col = self.agentSearcherPos[1] - 1
         elif action == "L":
-            row = self.agentPos[0]
-            col = self.agentPos[1] + 1
+            row = self.agentSearcherPos[0]
+            col = self.agentSearcherPos[1] + 1
         elif action =="NE":
-            row = self.agentPos[0] - 1
-            col = self.agentPos[1] + 1
+            row = self.agentSearcherPos[0] - 1
+            col = self.agentSearcherPos[1] + 1
         elif action =="NO":
-            row = self.agentPos[0] - 1
-            col = self.agentPos[1] - 1
+            row = self.agentSearcherPos[0] - 1
+            col = self.agentSearcherPos[1] - 1
         elif action =="SE":
-            row = self.agentPos[0] + 1
-            col = self.agentPos[1] + 1
+            row = self.agentSearcherPos[0] + 1
+            col = self.agentSearcherPos[1] + 1
         elif action =="SO":
-            row = self.agentPos[0] + 1
-            col = self.agentPos[1] - 1
+            row = self.agentSearcherPos[0] + 1
+            col = self.agentSearcherPos[1] - 1
         elif action =="ST":
-            row = self.agentPos[0]
-            col = self.agentPos[1]
-        if (self.isPossibleToMove(self.agentPos[0], self.agentPos[1], row, col) == 1):
-            self.setAgentPos(row, col)
+            row = self.agentSearcherPos[0]
+            col = self.agentSearcherPos[1]
+        if (self.isPossibleToMove(self.agentSearcherPos[0], self.agentSearcherPos[1], row, col) == 1):
+            self.setagentSearcherPos(row, col)
 
+    ## Metodo que executa a acao de movimento do plano
+    def goHelper(self, action):
+        """
+            Esse metodo deve ser alterado de acordo com o action a ser passado
+        """
+        #result = plan.do()
+        #step = result[0]
+        if action == "N":
+            row = self.agentHelperPos[0] - 1
+            col = self.agentHelperPos[1]
+        elif action == "S":
+            row = self.agentHelperPos[0] + 1
+            col = self.agentHelperPos[1]
+        elif action == "O":
+            row = self.agentHelperPos[0]
+            col = self.agentHelperPos[1] - 1
+        elif action == "L":
+            row = self.agentHelperPos[0]
+            col = self.agentHelperPos[1] + 1
+        elif action =="NE":
+            row = self.agentHelperPos[0] - 1
+            col = self.agentHelperPos[1] + 1
+        elif action =="NO":
+            row = self.agentHelperPos[0] - 1
+            col = self.agentHelperPos[1] - 1
+        elif action =="SE":
+            row = self.agentHelperPos[0] + 1
+            col = self.agentHelperPos[1] + 1
+        elif action =="SO":
+            row = self.agentHelperPos[0] + 1
+            col = self.agentHelperPos[1] - 1
+        elif action =="ST":
+            row = self.agentHelperPos[0]
+            col = self.agentHelperPos[1]
+        if (self.isPossibleToMove(self.agentHelperPos[0], self.agentHelperPos[1], row, col) == 1):
+            self.setagentHelperPos(row, col)
 
     def getVictimVitalSignals(self, victimId):
         """ retorna os sinais vitais da vítima identificada pelo id
@@ -181,8 +231,8 @@ class Model:
         O id é um número sequencial de 1 em diante atribuído pela ordem de aparição no arquivo ambiente.txt (ver maze.py)
         @return id >= 1 quando há vítima e, caso contrário retorna 0 """
 
-        row = self.agentPos[0]
-        col = self.agentPos[1]
+        row = self.agentSearcherPos[0]
+        col = self.agentSearcherPos[1]
         victimId = self.maze.victims[row][col]
         return victimId
 

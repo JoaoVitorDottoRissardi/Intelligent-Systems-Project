@@ -19,7 +19,8 @@ class Square:
         ##Se tiver algo dentro dele, ira ser True
         self.color = False
         self.itemInside = False
-        self.agent = False
+        self.agentSearcher = False
+        self.agentHelper = False
         self.goal = False
         self.victim = False
 
@@ -28,9 +29,13 @@ class Square:
         self.stateAction = False
 
 
-    ## Seta se o agente está dentro
-    def setAgent(self, agentIn):
-        self.agent = agentIn
+    ## Seta se o agente vasculhador está dentro
+    def setAgentSearcher(self, agentIn):
+        self.agentSearcher = agentIn
+
+    ## Seta se o agente vasculhador está dentro
+    def setAgentHelper(self, agentIn):
+        self.agentHelper = agentIn
 
     ## Seta se o objetivo está dentro
     def setGoal(self, goalIn):
@@ -41,12 +46,14 @@ class Square:
         ## A depender do que tem dentro, muda a cor
         if self.color != False:
             pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
-        elif self.agent == True:
+        elif self.agentSearcher == True:
             pygame.draw.rect(self.screen,(0,255,0),(self.ref[0],self.ref[1],self.side,self.side))
+        elif self.agentHelper == True:
+            pygame.draw.rect(self.screen,(0,0,255),(self.ref[0],self.ref[1],self.side,self.side))
         elif self.color != False:
             pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
-        elif self.goal == True:
-            pygame.draw.rect(self.screen,(240,230,140),(self.ref[0],self.ref[1],self.side,self.side))
+        # elif self.goal == True:
+        #     pygame.draw.rect(self.screen,(240,230,140),(self.ref[0],self.ref[1],self.side,self.side))
         elif self.color != False:
             pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
         elif self.victim == True:
@@ -55,7 +62,7 @@ class Square:
             pygame.draw.rect(self.screen,(255,255,255),(self.ref[0],self.ref[1],self.side,self.side))
         ## Desenha o contorno preto
         pygame.draw.rect(self.screen,(0,0,0),(self.ref[0],self.ref[1],self.side,self.side),1)
-            
+
     ## Verifica se clicou dentro do quadrado
     def checkClick(self, posMouse):
         if posMouse[0] < self.ref[0] or posMouse[0] > self.ref[0] + self.side:
@@ -68,7 +75,7 @@ class Square:
             ## E abre a caixa de opções que podem estar dentro do quadrado
             self.openOptions()
             return self
-        
+
     ## Abre a caixa de opções de blocos que podem estar dentro do quadrado
     def openOptions(self):
         self.selectItens = boxItens.BoxItens(self.screen)
@@ -79,14 +86,15 @@ class Square:
     def checkClickItens(self, posMouse):
         self.itemInside = self.selectItens.checkClickIten(posMouse)
         if self.itemInside == "Agente":
-            self.agent = True
+            self.agentSearcher = True
+            self.agentHelper = True
             return self
         elif self.itemInside == "Objetivo":
             self.goal = True
             return self
         self.updateColor()
         return False
-    
+
     ## Metodo que atualiza a cor do bloco de acordo com o item
     def updateColor(self):
         if self.itemInside == "Parede":
@@ -99,14 +107,15 @@ class Square:
             self.color = (0,0,0)
             self.actionable = True
         elif self.itemInside == "Agente":
-            self.agent = True
+            self.agentSearcher = True
+            self.AgentHelper = True
         elif self.itemInside == "Objetivo":
             self.goal = True
         elif self.itemInside == "Vitima":
             self.victim = True
         else:
             self.color = False
-    
+
     ## Método que define as ações dos objetos acionáveis
     def doAction(self, action):
         ## No momento, só tem a lampada. Então a unica ação dela é ligar ou desligar
@@ -119,4 +128,3 @@ class Square:
                 self.stateAction = False
             self.show()
         ## Para adicionar mais elementos, coloque no aqui
-

@@ -3,7 +3,7 @@
 ### Agente que fixa um objetivo aleatório e anda aleatoriamente pelo labirinto até encontrá-lo.
 ### Executa raciocíni on-line: percebe --> [delibera] --> executa ação --> percebe --> ...
 import sys
-import numpy as np
+
 ## Importa Classes necessarias para o funcionamento
 from model import Model
 from problem import Problem
@@ -19,7 +19,7 @@ sys.path.append('pkg/planner')
 from planner import Planner
 
 ## Classe que define o Agente
-class AgentSearcher:
+class AgentHelper:
     def __init__(self, model, batteryHelper, timeHelper, packageHelper, map, victimsPos):
         """
         Construtor do agente random
@@ -58,6 +58,7 @@ class AgentSearcher:
         self.map = map
         self.victimsQueue = victimsPos
 
+        self.moves = []
         """
         DEFINE OS PLANOS DE EXECUÇÃO DO AGENTE
         """
@@ -80,45 +81,97 @@ class AgentSearcher:
 
         ## inicializa a bateria e tempo do agente vasculhador
         self.battery = batteryHelper
-        self.maxBaterry = batteryHelper
+        self.maxBattery = batteryHelper
         self.time = timeHelper
         self.packages = packageHelper
+        self.maxPackages = packageHelper
 
-    ## Metodo que define a deliberacao do agente
     def deliberate(self):
 
-        if victimsQueue.empty():
-            print("Nenhuma vítima encontrada pelo agente vasculhador. Encerrando execucao: 0 vitimas salvas")
+        if not self.victimsQueue:
+            print("Nenhuma vitima encontrada pelo agente vasculhador. Encerrando execucao: 0 vitimas salvas")
             return -1
 
-        while not victimsQueue.empty():
+        if self.time <= 0:
+            print("Tempo expirado ; Encerrando execucao")
 
-            victimPos = self.victimsQueue.pop()
-            self.plan.updateGoal(victimsPos)
-            self.plan.updateInitialState(self.positionSensor())
-            victimPath = self.plan.findPath()
+        while self.time > 0:
 
-            self.plan.updateGoal(self.prob.initialState)
-            self.plan.updateInitialState(self.positionSensor())
-            homePath = self.plan.findPath()
+            self.currentState = self.positionSensor()
 
-            if(2*victimPath[victimPos][1] + homePath[self.prob.initialState][1] > self.battery or
-            2*victimPath[victimPos][1] + homePath[self.prob.initialState][1] > self.time ):
-                self.plan.makePath(homePath)
-                self.victimsQueue.append(victimPos)
-                self.walkPath(self.prob.initialState)
-
+            if self.victimsQueue:
+                victimPos = self.victimsQueue.pop(0)
             else:
-                self.plan.makePath(victimPath)
+                print("Nenhuma vitima restante para salvamento. Encerrando execucao")
+                return -1
+
+            victimNode = Node(victimPos)
+            self.plan.updateGoal(victimPos)
+            self.plan.updateInitialState(self.currentState)
+            victimPath = self.plan.findPath()
+            # print("Custo para chegar ate a vitima:", victimPath[victimNode.position][1])
+
+            homeNode = Node(self.prob.initialState)
+            self.plan.updateGoal(self.prob.initialState)
+            self.plan.updateInitialState(self.currentState)
+            homePath = self.plan.findPath()
+            # print("Custo para chegar ate a base:", homePath[homeNode.position][1])
+
+            # O agente está sem tempo para salvar a proxima vitima
+            if (2*victimPath[victimPos][1] + homePath[self.prob.initialState][1]) > self.time:
+                # Verifica se não há mais nenhuma vítima ser salva
+                if not self.victimsQueue:
+                    goalNode = Node(self.prob.initialState)
+                    self.plan.makePath(homePath, self.currentState, goalNode)
+                    self.victimsQueue.append(victimPos)
+                    self.walkPath(self.prob.initialState)
+                    return -1
+
+            # O agente está sem bateria para salvar a proxima vítima e precisa recarregar
+            elif(2*victimPath[victimPos][1] + homePath[self.prob.initialState][1]) > self.battery:
+                goalNode = Node(self.prob.initialState)
+                self.plan.makePath(homePath, self.currentState, goalNode)
+                self.victimsQueue.insert(0, victimPos)
+                self.walkPath(self.prob.initialState)
+                self.battery = self.maxBattery
+                self.time -= 240
+
+            # O agente possui tempo e bateria mas não pacotes suficientes ; já aproveita e recarrega
+            elif self.packages < 1:
+                goalNode = Node(self.prob.initialState)
+                self.plan.makePath(homePath, self.currentState, goalNode)
+                self.victimsQueue.insert(0, victimPos)
+                self.walkPath(self.prob.initialState)
+                self.battery = self.maxBattery
+                self.time -= 240
+                self.time -= 0.5 * (self.maxPackages - self.packages)
+                self.packages = self.maxPackages
+
+            # O agente possui recursos para ajudar a vítima
+            else:
+                goalNode = Node(victimPos)
+                self.plan.makePath(victimPath, self.currentState, goalNode)
                 self.packages -= 1
-                self.walkPath(victimsPos)
+                self.time -= 0.5
+                self.walkPath(victimPos)
+
+        print("Tempo expirado ; Encerrando execucao")
+        print(self.moves)
+        self.currentState = self.prob.initialState
 
     def walkPath(self, goal):
-        while self.positionSensor() not goal:
+        print(goal)
+        print(self.currentState)
+
+        while self.currentState != goal:
+
             result = self.plan.chooseAction()
             self.executeGo(result[0][0])
+            self.moves.append(result[0][0])
+            print(result[0][0])
             self.battery -= result[1]
             self.time -= result[2]
+            self.currentState = self.positionSensor()
 
     ## Metodo que executa as acoes
     def executeGo(self, action):
@@ -127,7 +180,7 @@ class AgentSearcher:
         @return 1 caso movimentacao tenha sido executada corretamente """
 
         ## Passa a acao para o modelo
-        result = self.model.go(action)
+        result = self.model.goHelper(action)
 
         ## Se o resultado for True, significa que a acao foi completada com sucesso, e ja pode ser removida do plano
         ## if (result[1]): ## atingiu objetivo ## TACLA 20220311
@@ -139,7 +192,7 @@ class AgentSearcher:
     def positionSensor(self):
         """Simula um sensor que realiza a leitura do posição atual no ambiente.
         @return instancia da classe Estado que representa a posição atual do agente no labirinto."""
-        pos = self.model.agentPos
+        pos = self.model.agentHelperPos
         return State(pos[0],pos[1])
 
     def victimPresenceSensor(self):

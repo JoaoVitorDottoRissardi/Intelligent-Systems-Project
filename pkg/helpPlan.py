@@ -18,7 +18,7 @@ class Node:
         if self.position.col < len(map[0]) - 1 and map[self.position.row][self.position.col + 1] == 1:
             self.neighbors.append((State(self.position.row, self.position.col + 1), 1)) #EAST
 
-        if self.position.row > 0 and map[self.position.row][self.position.col - 1] == 1:
+        if self.position.col > 0 and map[self.position.row][self.position.col - 1] == 1:
             self.neighbors.append((State(self.position.row, self.position.col - 1), 1)) #WEST
 
         if self.position.row < len(map) - 1 and self.position.col < len(map[0]) - 1 and map[self.position.row + 1][self.position.col + 1] == 1:
@@ -76,8 +76,11 @@ class HelpPlan:
         return sqrt((row - self.goalPos.row)*(row - self.goalPos.row) + (col - self.goalPos.col)*(col - self.goalPos.col))
 
     def findPath(self):
+
         cameFrom = {}
+
         if self.initialState == self.goalPos:
+            cameFrom[self.initialState] = (Node(self.goalPos), 0)
             return cameFrom
 
         nodeDict = {}
@@ -99,6 +102,7 @@ class HelpPlan:
 
         while not openList.empty():
             current = openList.get()[2]
+
             openListHash.remove(current.position)
 
             if current.position == self.goalPos:

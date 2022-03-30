@@ -90,8 +90,17 @@ class AgentSearcher:
 
         ## inicializa a bateria e tempo do agente vasculhador
         self.battery = batterySearcher
-        self.maxBaterry = batterySearcher
+        self.maxBattery = batterySearcher
         self.time = timeSearcher
+        self.needToRecharge = False
+
+        self.victimsQueue = []
+
+    def getVictimsQueue(self):
+        return self.victimsQueue
+
+    def getMap(self):
+        return self.map
 
     ## Metodo que define a deliberacao do agente
     def deliberate(self):
@@ -127,73 +136,84 @@ class AgentSearcher:
 
         ## Verifica se tem vitima na posicao atual
         victimId = self.victimPresenceSensor()
-        if victimId > 0:
+        if victimId > 0 and self.victimsQueue.count(self.currentState) == 0:
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " sinais vitais: ", self.victimVitalSignalsSensor(victimId))
             print ("vitima encontrada em ", self.currentState, " id: ", victimId, " dif de acesso: ", self.victimDiffOfAcessSensor(victimId))
-            
+
             self.battery -= 2
             self.time -= 2
+
+            self.victimsQueue.append(self.currentState)
+
+        # Imprime os recursos do agente
+        print("Bateria do Agente: " + str(self.battery))
+        print("Tempo restante do Agente: " + str(self.time))
 
         # Calcula o melhor caminho para retornar e avalia se precisa executá-lo ao não
         goalNode = Node(self.prob.initialState)
         returnPath = self.libPlan[1].findPath()
-        print("Bateria do Agente: " + str(self.battery))
-        print("Tempo restante do Agente: " + str(self.time))
-        if returnPath:
-            print("Custo calculado para voltar para base: " + str(returnPath[goalNode.position][1]))
-        else:
-            print("Custo calculado para voltar para base: 0 ")
-        if(returnPath and (returnPath[goalNode.position][1] >= (self.battery - 4.5) or returnPath[goalNode.position][1] >= (self.time - 4.5))):
+
+        print("Custo calculado para voltar para base: " + str(returnPath[goalNode.position][1]))
+
+        # Agente corre o risco de ficar sem bateria para retornar para a base caso execute uma ação
+        if returnPath[goalNode.position][1] >= (self.battery - 4.5) and self.currentState != self.prob.initialState:
+            self.plan = self.libPlan[1]
+            self.plan.makePath(returnPath, self.currentState, goalNode)
+            self.needToRecharge = True
+            print(self.plan.returnPath)
+
+        # Agente corre o risco de ficar sem tempo para retornar para a base caso execute uma ação
+        if returnPath[goalNode.position][1] >= (self.time - 4.5) and self.currentState != self.prob.initialState:
             self.plan = self.libPlan[1]
             self.plan.makePath(returnPath, self.currentState, goalNode)
             print(self.plan.returnPath)
+
         ## Define a proxima acao a ser executada
         ## currentAction eh uma tupla na forma: <direcao>, <state>
         result = self.plan.chooseAction()
 
-        # Caso a ação escolhida vá deixar o agente sem tempo para voltar ele fica parado
-        if (self.time - (2*result[2])) <= 0:
-            print("Ag deliberou pela acao: ", "STAY", " o estado resultado esperado é a posição atual")
-            self.executeGo("ST")
+        # Caso a ação escolhida vá deixar o agente sem tempo e ele estiver na base encerra execução
+        if (self.time - (2*result[2])) <= 0 and self.currentState == self.prob.initialState:
+            print("Tempo expirado ; Passando as informacoes para o agente socorrista")
+            return -1
+
+        # Caso a ação vá deixar o agente sem tempo e fora da base ele encerra execução
+        elif (self.time - (2*result[2])) <= 0 and result[0][1] != self.prob.initialState:
+            print("Tempo expirado ; Agente fora da base ; Encerrando: 0 vitimas salvas")
+            del self.libPlan[0]
+            del self.libPlan[0]
+            return -1
+
+        # Caso a ação escolhida vá deixar o agente sem bateria e ele estiver na base ele recarrega
+        if self.battery <= 4 and self.currentState == self.prob.initialState:
+            print("Bateria ira acabar ; Precisa recarregar")
+            self.needToRecharge = True
+            # print("Ag deliberou pela acao: ", "STAY", " o estado resultado esperado é a posição atual")
+            # self.executeGo("ST")
+
+        # Caso a ação escolhida vá deixar o agente sem bateria fora da base ele encerra execução
+        elif (self.battery - (2*result[1])) <= 0 and result[0][1] != self.prob.initialState:
+            print("Agente sem bateria ; Agente fora da base ; Encerrando: 0 vitimas salvas")
+            del self.libPlan[0]
+            del self.libPlan[0]
+            return -1
+
+        # Caso ele precise recarregar e estiver dentro da base, ele recarrega
+        if self.needToRecharge and self.currentState == self.prob.initialState:
+            print("Agente recarregando")
+            self.battery = self.maxBattery
+            self.time -= 240
+            self.needToRecharge = False
+
         ## Executa esse acao, atraves do metodo executeGo
-        else:
-            print("Ag deliberou pela acao: ", result[0][0], " o estado resultado esperado é: ", result[0][1])
-            self.executeGo(result[0][0])
+        print("Ag deliberou pela acao: ", result[0][0], " o estado resultado esperado é: ", result[0][1])
+        self.executeGo(result[0][0])
         self.previousAction = result[0][0]
         self.expectedState = result[0][1]
 
         self.battery -= result[1]
         self.time -= result[2]
         self.map = result[3]
-
-        # A bateria do agente acabou e ele estava fora da base
-        if (self.battery <= 0  and self.currentState != self.prob.initialState ):
-            print("Agente sem bateria ; Agente fora da base ; Encerrando: 0 vitimas salvas")
-            del self.libPlan[0]
-            del self.libPlan[0]
-            return 1
-
-        # A bateria do agente acabou e ele estava dentro da base
-        if self.battery <=0 :
-            print("Agente recarregando")
-            self.baterry = self.maxBaterry
-            self.time -= 240
-
-        # O tempo do agente acabou e ele estava fora da base
-        if self.time <= 0  and self.currentState != self.prob.initialState:
-            print("Tempo expirado ; Agente fora da base ; Encerrando: 0 vitimas salvas")
-            del self.libPlan[0]
-            del self.libPlan[0]
-            return 1
-            # for i in range(self.model.rows):
-            #     print(self.map[i])
-
-        # O tempo do agente acabou e ele estava dentro da base
-        if self.time <= 0:
-            print("Tempo expirado ; Passando as informacoes para o agente socorrista")
-            del self.libPlan[0]
-            del self.libPlan[0]
-            return 1
 
     ## Metodo que executa as acoes
     def executeGo(self, action):
@@ -202,7 +222,7 @@ class AgentSearcher:
         @return 1 caso movimentacao tenha sido executada corretamente """
 
         ## Passa a acao para o modelo
-        result = self.model.go(action)
+        result = self.model.goSearcher(action)
 
         ## Se o resultado for True, significa que a acao foi completada com sucesso, e ja pode ser removida do plano
         ## if (result[1]): ## atingiu objetivo ## TACLA 20220311
@@ -214,7 +234,7 @@ class AgentSearcher:
     def positionSensor(self):
         """Simula um sensor que realiza a leitura do posição atual no ambiente.
         @return instancia da classe Estado que representa a posição atual do agente no labirinto."""
-        pos = self.model.agentPos
+        pos = self.model.agentSearcherPos
         return State(pos[0],pos[1])
 
     def victimPresenceSensor(self):
