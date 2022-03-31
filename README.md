@@ -5,6 +5,10 @@ Projeto em Python que simula vítimas dispersas em um ambiente com paredes
 Luan Carlos Klein & Cesar Augusto Tacla
 UTFPR, Câmpus Curitiba, grupo PET ENGENHARIA DE COMPUTAÇÃO
 
+**Colaboradores**
+Jhonny Kristyan Vaz-Tostes de Assis     RA:2126672 
+João Vítor Dotto Rissardi               RA:2126699
+
 **RESCUE SIMULATOR**
 Permite construir um ambiente na forma de um labirinto onde há um agente capaz de se deslocar nas direções N, S, L, O, NE, NO, SE e SO. A arquitetura do agente é baseada no modelo BDI (Beliefs, Desires and Intentions). 
 O agente possui um ciclo de raciocínio e a cada iteração recebe percepções do ambiente por meio dos seus sensores, processa estas percepções para verificar o estado atual do ambiente e para construir uma representação do estado atual do ambiente. Com esta representação atualizada e com suas crenças (fornecidas pelo programador ou inferidas), delibera sobre a próxima ação que o levará mais próximo do estado objetivo. Tendo escolhido a ação, o agente atua no ambiente modificando o estado deste último. A partir daí o ciclo se reinicia.
