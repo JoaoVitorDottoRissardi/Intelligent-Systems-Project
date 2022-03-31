@@ -62,7 +62,7 @@ class MapSquare:
                 ## O formato de cada linha é:
                 ## Nome x,y x,y x,y
                 values = line.split(" ")
-                # print(values)
+
                 ## O primeiro dado é o nome do objeto, seguido por varias posicoes
                 if(values[0] == "Parede"):
                     things[values.pop(0)] = values
@@ -71,7 +71,6 @@ class MapSquare:
 
             ## Percorre os elementos que foram definidos
             for i in things:
-                # print(i)
                 for j in things[i]:
                     if i == "Parede":
                         pos = j.split(",")

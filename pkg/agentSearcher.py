@@ -53,7 +53,6 @@ class AgentSearcher:
 
         # definimos um estado objetivo que veio do arquivo ambiente.txt
         self.prob.defGoalState(model.maze.board.posGoal[0],model.maze.board.posGoal[1])
-        print("*** Objetivo do agente: ", self.prob.goalState)
         print("*** Total de vitimas existentes no ambiente: ", self.model.getNumberOfVictims())
 
         #define o mapa que o agente carregará consigo
@@ -95,6 +94,8 @@ class AgentSearcher:
         self.needToRecharge = False
 
         self.victimsQueue = []
+        self.returnStack = []
+        self.returning = False
 
     def getVictimsQueue(self):
         return self.victimsQueue
@@ -108,7 +109,7 @@ class AgentSearcher:
         if len(self.libPlan) == 0:
             return -1   ## fim da execucao do agente, acabaram os planos
 
-        print("\n*** Inicio do ciclo raciocinio ***")
+        print("\n*** Inicio do ciclo raciocinio do agente vasculhador ***")
         print("Pos agente no amb.: ", self.positionSensor())
 
         ## Redefine o estado atual do agente de acordo com o resultado da execução da ação do ciclo anterior
@@ -124,21 +125,11 @@ class AgentSearcher:
         if not (self.currentState == self.expectedState):
             print("---> erro na execucao da acao ", self.previousAction, ": esperava estar em ", self.expectedState, ", mas estou em ", self.currentState)
 
-        # ## Funcionou ou nao, vou somar o custo da acao com o total
-        # self.costAll += self.prob.getActionCost(self.previousAction)
-        # print ("Custo até o momento (com a ação escolhida):", self.costAll)
-
-        ## Verifica se atingiu o estado objetivo
-        ## Poderia ser outra condição, como atingiu o custo máximo de operação
-        # if self.prob.goalTest(self.currentState):
-        #     print("!!! Objetivo atingido !!!")
-        #     del self.libPlan[0]  ## retira plano da biblioteca
-
         ## Verifica se tem vitima na posicao atual
         victimId = self.victimPresenceSensor()
         if victimId > 0 and self.victimsQueue.count(self.currentState) == 0:
-            print ("vitima encontrada em ", self.currentState, " id: ", victimId, " sinais vitais: ", self.victimVitalSignalsSensor(victimId))
-            print ("vitima encontrada em ", self.currentState, " id: ", victimId, " dif de acesso: ", self.victimDiffOfAcessSensor(victimId))
+            print ("vitima encontrada em ", self.currentState, " id: ")#, victimId, " sinais vitais: ", self.victimVitalSignalsSensor(victimId))
+            print ("vitima encontrada em ", self.currentState, " id: ")#, victimId, " dif de acesso: ", self.victimDiffOfAcessSensor(victimId))
 
             self.battery -= 2
             self.time -= 2
@@ -149,32 +140,43 @@ class AgentSearcher:
         print("Bateria do Agente: " + str(self.battery))
         print("Tempo restante do Agente: " + str(self.time))
 
-        # Calcula o melhor caminho para retornar e avalia se precisa executá-lo ao não
-        goalNode = Node(self.prob.initialState)
-        returnPath = self.libPlan[1].findPath()
+        if self.currentState == self.prob.initialState and self.returning:
+            self.returning = False
 
-        print("Custo calculado para voltar para base: " + str(returnPath[goalNode.position][1]))
+        if not self.returning:
+            # Calcula o melhor caminho para retornar e avalia se precisa executá-lo ao não
+            goalNode = Node(self.prob.initialState)
+            returnPath = self.libPlan[1].findPath()
 
-        # Agente corre o risco de ficar sem bateria para retornar para a base caso execute uma ação
-        if returnPath[goalNode.position][1] >= (self.battery - 4.5) and self.currentState != self.prob.initialState:
+            print("Custo calculado para voltar para base: " + str(returnPath[goalNode.position][1]))
+
+            # Agente corre o risco de ficar sem bateria para retornar para a base caso execute uma ação
+            if returnPath[goalNode.position][1] >= (self.battery - 4.5) and self.currentState != self.prob.initialState:
+                print("Agente retornando para a base!")
+                self.plan = self.libPlan[1]
+                self.libPlan[1].makePath(returnPath, self.currentState, goalNode)
+                self.needToRecharge = True
+                self.returning = True
+
+            # Agente corre o risco de ficar sem tempo para retornar para a base caso execute uma ação
+            if returnPath[goalNode.position][1] >= (self.time - 4.5) and self.currentState != self.prob.initialState:
+                print("Agente retornando para a base!")
+                self.plan = self.libPlan[1]
+                self.libPlan[1].makePath(returnPath, self.currentState, goalNode)
+                self.returning = True
+
+            result = self.plan.chooseAction()
+
+        else:
+            print("Agente retornando para a base!")
             self.plan = self.libPlan[1]
-            self.plan.makePath(returnPath, self.currentState, goalNode)
-            self.needToRecharge = True
             print(self.plan.returnPath)
-
-        # Agente corre o risco de ficar sem tempo para retornar para a base caso execute uma ação
-        if returnPath[goalNode.position][1] >= (self.time - 4.5) and self.currentState != self.prob.initialState:
-            self.plan = self.libPlan[1]
-            self.plan.makePath(returnPath, self.currentState, goalNode)
-            print(self.plan.returnPath)
-
-        ## Define a proxima acao a ser executada
-        ## currentAction eh uma tupla na forma: <direcao>, <state>
-        result = self.plan.chooseAction()
+            result = self.plan.chooseAction()
+            self.libPlan[0].computeMove(result[0][0])
 
         if result[0][0] ==  "ST":
-            print("Sem movimentos possiveis ; Passando para o agente socorrista")
-            return -1
+            print("Sem movimentos possiveis ; Esperando Tempo acabar ; Passando para o agente socorrista")
+            self.returning = True
 
         # Caso a ação escolhida vá deixar o agente sem tempo e ele estiver na base encerra execução
         if (self.time - (2*result[2])) <= 0 and self.currentState == self.prob.initialState:
@@ -186,20 +188,20 @@ class AgentSearcher:
             print("Tempo expirado ; Agente fora da base ; Encerrando: 0 vitimas salvas")
             del self.libPlan[0]
             del self.libPlan[0]
+            self.victimsQueue = []
             return -1
 
         # Caso a ação escolhida vá deixar o agente sem bateria e ele estiver na base ele recarrega
         if self.battery <= 4 and self.currentState == self.prob.initialState:
             print("Bateria ira acabar ; Precisa recarregar")
             self.needToRecharge = True
-            # print("Ag deliberou pela acao: ", "STAY", " o estado resultado esperado é a posição atual")
-            # self.executeGo("ST")
 
         # Caso a ação escolhida vá deixar o agente sem bateria fora da base ele encerra execução
         elif (self.battery - (2*result[1])) <= 0 and result[0][1] != self.prob.initialState:
             print("Agente sem bateria ; Agente fora da base ; Encerrando: 0 vitimas salvas")
             del self.libPlan[0]
             del self.libPlan[0]
+            self.victimsQueue = []
             return -1
 
         # Caso ele precise recarregar e estiver dentro da base, ele recarrega
@@ -212,6 +214,7 @@ class AgentSearcher:
         ## Executa esse acao, atraves do metodo executeGo
         print("Ag deliberou pela acao: ", result[0][0], " o estado resultado esperado é: ", result[0][1])
         self.executeGo(result[0][0])
+
         self.previousAction = result[0][0]
         self.expectedState = result[0][1]
 
@@ -227,11 +230,6 @@ class AgentSearcher:
 
         ## Passa a acao para o modelo
         result = self.model.goSearcher(action)
-
-        ## Se o resultado for True, significa que a acao foi completada com sucesso, e ja pode ser removida do plano
-        ## if (result[1]): ## atingiu objetivo ## TACLA 20220311
-        ##    del self.plan[0]
-        ##    self.actionDo((2,1), True)
 
 
     ## Metodo que pega a posicao real do agente no ambiente

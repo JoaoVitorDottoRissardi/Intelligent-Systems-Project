@@ -104,10 +104,10 @@ class ReturnPlan:
 
             if current.position == self.goalPos:
                 return cameFrom
-            #print("Current:", current.position)
+
             for neighbor in current.neighbors:
                 tempGValue = gValue[current.position] + neighbor[1]
-                #print("Neighbors:", neighbor[0])
+
                 if tempGValue < gValue[neighbor[0]]:
                     cameFrom[neighbor[0]] = (current, tempGValue)
                     gValue[neighbor[0]] = tempGValue

@@ -40,6 +40,7 @@ class AgentHelper:
         # O agente le sua posica no ambiente por meio do sensor
         initial = self.positionSensor()
         self.prob.defInitialState(initial.row, initial.col)
+        print("\n")
         print("*** Estado inicial do agente: ", self.prob.initialState)
 
         # Define o estado atual do agente = estado inicial
@@ -51,7 +52,6 @@ class AgentHelper:
 
         # definimos um estado objetivo que veio do arquivo ambiente.txt
         self.prob.defGoalState(model.maze.board.posGoal[0],model.maze.board.posGoal[1])
-        print("*** Objetivo do agente: ", self.prob.goalState)
         print("*** Total de vitimas existentes no ambiente: ", self.model.getNumberOfVictims())
 
         #define o mapa que o agente carregará consigo
@@ -88,6 +88,8 @@ class AgentHelper:
 
     def deliberate(self):
 
+        print("\n*** Inicio do ciclo raciocinio do agente socorrista ***")
+
         if not self.victimsQueue:
             print("Nenhuma vitima encontrada pelo agente vasculhador. Encerrando execucao: 0 vitimas salvas")
             return -1
@@ -105,13 +107,11 @@ class AgentHelper:
             self.plan.updateGoal(victimPos)
             self.plan.updateInitialState(self.currentState)
             victimPath = self.plan.findPath()
-            # print("Custo para chegar ate a vitima:", victimPath[victimNode.position][1])
 
             homeNode = Node(self.prob.initialState)
             self.plan.updateGoal(self.prob.initialState)
             self.plan.updateInitialState(self.currentState)
             homePath = self.plan.findPath()
-            # print("Custo para chegar ate a base:", homePath[homeNode.position][1])
 
             # O agente está sem tempo para salvar a proxima vitima
             if (2*victimPath[victimPos][1] + homePath[self.prob.initialState][1]) > self.time:
@@ -119,7 +119,7 @@ class AgentHelper:
                 if not self.victimsQueue:
                     goalNode = Node(self.prob.initialState)
                     self.plan.makePath(homePath, self.currentState, goalNode)
-                    self.victimsQueue.append(victimPos)
+                    #self.victimsQueue.append(victimPos)
                     self.walkPath(self.prob.initialState)
                     return -1
 
@@ -162,20 +162,17 @@ class AgentHelper:
                 self.walkPath(self.prob.initialState)
                 break
 
-        print("Tempo expirado ; Encerrando execucao")
-        #print(self.moves)
+        print("Tempo expirado ;",self.model.getNumberOfVictims() - len(self.victimsQueue)," vitimas salvas ;"," Encerrando execucao ")
         self.currentState = self.prob.initialState
 
     def walkPath(self, goal):
-        # print(goal)
-        # print(self.currentState)
 
         while self.currentState != goal:
 
             result = self.plan.chooseAction()
             self.executeGo(result[0][0])
             self.moves.append(result[0][0])
-            # print(result[0][0])
+
             self.battery -= result[1]
             self.time -= result[2]
             self.currentState = self.positionSensor()

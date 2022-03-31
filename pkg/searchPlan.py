@@ -150,6 +150,19 @@ class SearchPlan:
 
         return result, batteryCost, timeCost, self.map
 
+    def computeMove(self, move):
+        if move in self.untried[self.currentState.row][self.currentState.col]:
+            self.untried[self.currentState.row][self.currentState.col].remove(move)
+            movePos = { "N" : (-1, 0),
+                    "S" : (1, 0),
+                    "L" : (0, 1),
+                    "O" : (0, -1),
+                    "NE" : (-1, 1),
+                    "SO" : (1, -1),
+                    "NO" : (-1, -1),
+                    "SE" : (1, 1)
+                    }
+            self.unbacktracked[self.currentState.row + movePos[move][0]][self.currentState.col + movePos[move][1]].append(self.compass[move][1])
 
     def do(self):
         """
