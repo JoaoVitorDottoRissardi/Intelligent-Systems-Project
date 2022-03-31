@@ -88,6 +88,8 @@ class AgentHelper:
 
     def deliberate(self):
 
+        totalVictims = len(self.victimsQueue)
+
         print("\n*** Inicio do ciclo raciocinio do agente socorrista ***")
 
         if not self.victimsQueue:
@@ -162,7 +164,7 @@ class AgentHelper:
                 self.walkPath(self.prob.initialState)
                 break
 
-        print("Tempo expirado ;",self.model.getNumberOfVictims() - len(self.victimsQueue)," vitimas salvas ;"," Encerrando execucao ")
+        print("Tempo expirado ;",totalVictims - len(self.victimsQueue)," vitimas salvas ;"," Encerrando execucao ")
         self.currentState = self.prob.initialState
 
     def walkPath(self, goal):
