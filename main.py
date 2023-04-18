@@ -2,81 +2,44 @@ import sys
 import os
 import time
 
-## Importa as classes que serao usadas
-sys.path.append('pkg')
-from model import Model
-from agentRnd import AgentRnd
-from agentSearcher import AgentSearcher
-from agentHelper import AgentHelper
 
+## importa classes
+from environment import Env
+from explorer import Explorer
+from rescuer import Rescuer
 
-## Metodo utilizado para permitir que o usuario construa o labirindo clicando em cima
-def buildMaze(model):
-    model.drawToBuild()
-    step = model.getStep()
-    while step == "build":
-        model.drawToBuild()
-        step = model.getStep()
-    ## Atualiza o labirinto
-    model.updateMaze()
+def main(data_folder_name):
+   
+    # Set the path to config files and data files for the environment
+    current_folder = os.path.abspath(os.getcwd())
+    data_folder = os.path.abspath(os.path.join(current_folder, data_folder_name))
 
-def main():
-    # Lê arquivo config.txt
-    arq = open(os.path.join("config_data","config.txt"),"r")
-    configDict = {}
-    for line in arq:
-        ## O formato de cada linha é:var=valor
-        ## As variáveis são
-        ##  maxLin, maxCol que definem o tamanho do labirinto
-        ## Tv e Ts: tempo limite para vasculhar e tempo para salvar
-        ## Bv e Bs: bateria inicial disponível ao agente vasculhador e ao socorrista
-        ## Ks :capacidade de carregar suprimentos em número de pacotes (somente para o ag. socorrista)
+    
+    # Instantiate the environment
+    env = Env(data_folder)
+    
+    # config files for the agents
+    rescuer_file = os.path.join(data_folder, "rescuer_config.txt")
+    explorer_file = os.path.join(data_folder, "explorer_config.txt")
+    
+    # Instantiate agents rescuer and explorer
+    resc = Rescuer(env, rescuer_file)
 
-        values = line.split("=")
-        configDict[values[0]] = int(values[1])
+    # Explorer needs to know rescuer to send the map
+    # that's why rescuer is instatiated before
+    exp = Explorer(env, explorer_file, resc)
 
-    print("dicionario config: ", configDict)
-
-    # Cria o ambiente (modelo) = Labirinto com suas paredes
-    mesh = "square"
-
-    ## nome do arquivo de configuracao do ambiente - deve estar na pasta <proj>/config_data
-    loadMaze = "ambiente"
-
-    model = Model(configDict["maxLin"], configDict["maxCol"], mesh, loadMaze)
-    buildMaze(model)
-
-    #model.maze.board.posAgent
-    #model.maze.board.posGoal
-    # Define a posição inicial do agente no ambiente - corresponde ao estado inicial
-    model.setagentSearcherPos(configDict["maxLin"]-1, 0)
-    model.setagentHelperPos(configDict["maxLin"]-1, 0)
-    #model.setGoalPos(model.maze.board.posGoal[0],model.maze.board.posGoal[1])
-    model.draw()
-
-    # Cria um agente vasculhador
-    agentSearcher = AgentSearcher(model, configDict["Bv"], configDict["Tv"])
-    ## Ciclo de raciocínio do agente vasculhador
-    agentSearcher.deliberate()
-    while agentSearcher.deliberate() != -1:
-        model.draw()
-        time.sleep(0.01) # para dar tempo de visualizar as movimentacoes do agente no labirinto
-    model.draw()
-
-    # victimsQueue = agentSearcher.getVictimsQueue()
-    # while victimsQueue:
-    #     victimPos = victimsQueue.pop()
-    #     print(victimPos.row, victimPos.col)
-
-    agentHelper = AgentHelper(model, configDict["Bs"], configDict["Ts"], configDict["Ks"], agentSearcher.getMap(), agentSearcher.getVictimsQueue())
-
-    model.draw()
-    agentHelper.deliberate()
-    while agentHelper.moves:
-        agentHelper.executeGo(agentHelper.moves.pop(0))
-        model.draw()
-        time.sleep(0.1)
-    model.draw()
-
+    # Run the environment simulator
+    env.run()
+    
+        
 if __name__ == '__main__':
-    main()
+    """ To get data from a different folder than the default called data
+    pass it by the argument line"""
+    
+    if len(sys.argv) > 1:
+        data_folder_name = sys.argv[1]
+    else:
+        data_folder_name = "data"
+        
+    main(data_folder_name)
