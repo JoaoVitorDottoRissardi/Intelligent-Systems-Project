@@ -165,6 +165,8 @@ class GeneticTSP:
 
         elem_list.remove('0')
 
+        max_vsg = self.calculateVSG(elem_list)
+
         elem_list = np.array(elem_list)
         population_set = self.genesis(elem_list, self.inital_population)
         fitness_list, can_save_list, vsg_list = self.get_all_fitness(population_set,self.dict)
@@ -180,13 +182,16 @@ class GeneticTSP:
             #Saving the best solution
             if vsg_list.max() > best_solution[1]:
 
-                print("Fitness: ", vsg_list.max())
-                print("Generation : i", i)
+                #print("Fitness: ", vsg_list.max())
+                #print("Generation : i", i)
                 
                 best_solution[0] = i
                 best_solution[1] = vsg_list.max()
                 best_index = list(vsg_list).index(vsg_list.max())
                 best_solution[2] = can_save_list[best_index]
+            
+            if vsg_list.max() == max_vsg:
+                    return best_solution
         
             progenitor_list = self.progenitor_selection(population_set,fitness_list)
             new_population_set = self.mate_population(progenitor_list)

@@ -121,13 +121,13 @@ class Rescuer(AbstractAgent):
 
         #Tries to save the maximum number of victim with the time it haves
 
-        print("Initiating genetic algorithm calculations")
+        #print("Initiating genetic algorithm calculations")
 
         gen = GeneticTSP(number_of_victims, 500, 0.05, cost_dict, self.TLIM, gravity_dict)
 
         solution = gen.calculate_solution()
 
-        print(solution)
+        #print(solution)
 
         solution_list = solution[2]
 
@@ -194,7 +194,7 @@ class Rescuer(AbstractAgent):
                 res = self.body.first_aid(seq) # True when rescued 
                 self.saved_list.append(seq)
             elif seq >= 0 and seq not in self.saved_list and self.solution_cost + self.COST_FIRST_AID <= self.TLIM:
-                print("Saving not pretended: ", seq)        
+                #print("Saving not pretended: ", seq)        
                 res = self.body.first_aid(seq)
                 self.saved_list.append(seq)
                 self.solution_cost += self.COST_FIRST_AID
