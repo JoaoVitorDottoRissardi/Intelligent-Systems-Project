@@ -118,7 +118,7 @@ class GeneticTSP:
 
         
         if current_index == 0:
-            return 1, []
+            return 1, [], 1
         
         else:
             last_part_cost = self.calculate_last_part_fitness(elem_list,cost,current_index)
