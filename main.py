@@ -41,5 +41,5 @@ if __name__ == '__main__':
         data_folder_name = sys.argv[1]
     else:
         data_folder_name = "data"
-        
+
     main(data_folder_name)
