@@ -7,11 +7,12 @@ from sklearn.tree import export_graphviz
 import os
 import sys
 import joblib 
+import csv
 
-#Get parameters from user
-max_depth = int(sys.argv[1])
-min_samples = int(sys.argv[2])
-criterion = sys.argv[3]
+# Get parameters from user
+# max_depth = int(sys.argv[1])
+# min_samples = int(sys.argv[2])
+# criterion = sys.argv[3]
 
 #Load data
 data = pd.read_csv('treino_sinais_vitais_com_label.txt', 
@@ -29,95 +30,97 @@ print(x)
 
 print(y)
    
-#Generate models with a lot of different characteristics
+#Split data
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=43) 
 
-# models = []
-# accuracys = []
-# n_of_models = 100
-# max_depth_values = list(chain.from_iterable(repeat(x, 10) for x in range(1, 11, 1)))
-# min_samples_split_values = range(3, 14, 1)
-# print(min_samples_split_values)
+csv_file_path = 'id3_trees.csv' 
 
-# for i in range(n_of_models):
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42) 
-#     model = DecisionTreeClassifier(max_depth=max_depth_values[i], min_samples_split=min_samples_split_values[i%10])
-#     model.fit(X_train, y_train)
-#     models.append(model)
-#     y_pred = model.predict(X_test)
-#     accuracy = metrics.accuracy_score(y_test, y_pred)
-#     print("Index: ", i)
-#     print("Max depth", max_depth_values[i])
-#     print("Min sample split", min_samples_split_values[i%10])
-#     print("Accuracy", accuracy)
-#     accuracys.append(accuracy)
+fieldnames = ["model_index", "max_depth", "criterion", "min_samples_leaf", "accuracy", 
+              "precision_class_1", "precision_class_2", "precision_class_3", "precision_class_4", "average precision", 
+              "recall_class_1", "recall_class_2", "recall_class_3", "recall_class_4", "average recall", 
+              "f_measure_class_1", "f_measure_class_2", "f_measure_class_3", "f_measure_class_4", "average f_measure"]
 
+model_index = 1
 
-#Choose best model
+# with open(csv_file_path, mode='w', newline='') as file:
+#     writer = csv.DictWriter(file, fieldnames=fieldnames)
+#     writer.writeheader()
 
-# best_model = None
-# best_accuracy = 0.0
-
-# for model in models:
-#     y_pred = model.predict(X_test)
-#     accuracy = metrics.accuracy_score(y_test, y_pred)
-#     if accuracy > best_accuracy:
-#         best_accuracy = accuracy
-#         best_model = model
-
-# joblib.dump(best_model, 'best_model.pkl')
-
-#Split data until get a split with excalty 1 of 2 gravity 4 victims
-number_of_fours = 0
-
-while number_of_fours != 1:
-
-    number_of_fours = 0
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=43) 
-
-    for value in y_train:
-        if value == 4:
-            number_of_fours += 1
-    
-
-# Create Decision Tree classifer object
-clf = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf=min_samples, criterion=criterion)  
- 
-# # Train Decision Tree Classifer
-clf = clf.fit(x_train,y_train) 
- 
-# #Predict the response for test dataset 
-y_pred = clf.predict(x_test) 
+for max_depth in range(4, 10):
+    for criterion in ['gini', 'entropy', 'log_loss']:
+        for min_samples in range(1, 20):
+            # Create Decision Tree classifer object
+            clf = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf=min_samples, criterion=criterion)
+            # Train Decision Tree Classifer
+            clf = clf.fit(x_train, y_train)
+            #Predict the response for test dataset 
+            y_pred = clf.predict(x_test) 
+            #Save model
+            if model_index == 253 or model_index == 81 or model_index == 7 or model_index == 291:
+                FILE_NAME = "model_" + str(max_depth) + "_" + str(min_samples) + "_" + criterion + "_" + str(model_index) +  ".pkl"
+                joblib.dump(clf, "id3_models/" + FILE_NAME)
+            #Calculate metrics
+            accuracy = metrics.accuracy_score(y_test, y_pred)
+            precision = metrics.precision_score(y_test, y_pred, average=None, zero_division=0)
+            recall = metrics.recall_score(y_test,y_pred, average=None, zero_division=0)
+            f_measure = [(2 * p * r)/(p + r) if (p!=0 and r!=0) else 0 for p, r in zip(precision, recall)]
+            average_precision = sum(precision) / float(len(precision))
+            average_recall = sum(recall) / float(len(recall))
+            average_f_measure = sum(f_measure) / float(len(f_measure))
+            #Write to csv
+            tree_infomation = {"model_index" : model_index,
+                                "max_depth" : max_depth,
+                                "criterion" : criterion,
+                                "min_samples_leaf" : min_samples,
+                                "accuracy" : accuracy,
+                                "precision_class_1": precision[0],
+                                "precision_class_2": precision[1],
+                                "precision_class_3": precision[2],
+                                "precision_class_4": precision[3],
+                                "average precision" : average_precision,
+                                "recall_class_1": recall[0],
+                                "recall_class_2": recall[1],
+                                "recall_class_3": recall[2],
+                                "recall_class_4": recall[3],
+                                "average recall" : average_recall,
+                                "f_measure_class_1": f_measure[0],
+                                "f_measure_class_2": f_measure[1],
+                                "f_measure_class_3": f_measure[2],
+                                "f_measure_class_4": f_measure[3],
+                                "average f_measure" : average_f_measure}
+            #writer.writerow(tree_infomation)
+            print(model_index)
+            model_index += 1
 
 # Model Accuracy, how often is the classifier correct?
-print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
-print("Precision:",metrics.precision_score(y_test, y_pred, average=None))
-print("Recall Score:",metrics.recall_score(y_test,y_pred, average=None, zero_division=0))
-print("Confusion Matrix:\n",metrics.confusion_matrix(y_test,y_pred))
+# print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
+# print("Precision:",metrics.precision_score(y_test, y_pred, average=None, zero_division=0))
+# print("Recall Score:",metrics.recall_score(y_test,y_pred, average=None, zero_division=0))
+# print("Confusion Matrix:\n",metrics.confusion_matrix(y_test,y_pred))
  
-# Export .dot image
-PROJECT_ROOT_DIR = "."
-DATA_DIR = "id3_dot_images"
-FILE_NAME = "model_" + str(max_depth) + "_" + str(min_samples) + "_" + criterion + ".pkl"
+# # Export .dot image
+# PROJECT_ROOT_DIR = "."
+# DATA_DIR = "id3_dot_images"
+# FILE_NAME = "model_" + str(max_depth) + "_" + str(min_samples) + "_" + criterion + ".pkl"
 
-def image_path(fig_id):
-    return os.path.join(PROJECT_ROOT_DIR, DATA_DIR, fig_id)
+# def image_path(fig_id):
+#     return os.path.join(PROJECT_ROOT_DIR, DATA_DIR, fig_id)
 
-export_graphviz(
-        clf,
-        out_file=image_path(f"{FILE_NAME}.dot"),
-        feature_names=feature_cols,
-        class_names=['1', '2', '3', '4'],
-        rounded=True,
-        filled=True
-)
+# export_graphviz(
+#         clf,
+#         out_file=image_path(f"{FILE_NAME}.dot"),
+#         feature_names=feature_cols,
+#         class_names=['1', '2', '3', '4'],
+#         rounded=True,
+#         filled=True
+# )
 
-Source.from_file(image_path(f"{FILE_NAME}.dot"))
+# Source.from_file(image_path(f"{FILE_NAME}.dot"))
 
-#Print confirmation and save model
-if number_of_fours == 1:
-    print("Nice!")
-    joblib.dump(clf, "id3_models/" +FILE_NAME)
+# #Print confirmation and save model
+
+# print("Nice!")
+# joblib.dump(clf, "id3_models/" +FILE_NAME)
 
 # Plot ROC curves
 
