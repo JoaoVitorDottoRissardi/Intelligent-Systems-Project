@@ -1,14 +1,14 @@
     
     clear ; close all; clc
     escolha = input("Digite 1 para Defusificação centroid \nDigite 2 para Defusificação bisector \n");
-    opts = detectImportOptions('treino_sinais_vitais_com_label.txt');
-    preview('treino_sinais_vitais_com_label.txt',opts)
+    opts = detectImportOptions('../treino_sinais_vitais_com_label.txt');
+    preview('../treino_sinais_vitais_com_label.txt',opts)
     opts.SelectedVariableNames = [4 5 6];
-    fuzzy_inputs = readmatrix('treino_sinais_vitais_com_label.txt', opts);
+    fuzzy_inputs = readmatrix('../treino_sinais_vitais_com_label.txt', opts);
     opts.SelectedVariableNames = [7];
-    fuzzy_outputs = readmatrix('treino_sinais_vitais_com_label.txt', opts);
+    fuzzy_outputs = readmatrix('../treino_sinais_vitais_com_label.txt', opts);
     opts.SelectedVariableNames = [8];
-    fuzzy_outputsCat = readmatrix('treino_sinais_vitais_com_label.txt', opts);
+    fuzzy_outputsCat = readmatrix('../treino_sinais_vitais_com_label.txt', opts);
     
     % Carregue o sistema fuzzy a partir do arquivo FIS (Fuzzy Inference System) criado
     if(escolha == 1)

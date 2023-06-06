@@ -17,7 +17,7 @@ import csv
 option = sys.argv[1]
 
 #Load data
-data = pd.read_csv('treino_sinais_vitais_com_label.txt', 
+data = pd.read_csv('../treino_sinais_vitais_com_label.txt', 
                    header=None, 
                    delimiter=',', 
                    usecols=[3, 4, 5, 7], 

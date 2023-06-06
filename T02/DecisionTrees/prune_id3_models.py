@@ -17,7 +17,7 @@ import warnings
 
 #Load data
 
-data = pd.read_csv('treino_sinais_vitais_com_label.txt', 
+data = pd.read_csv('../treino_sinais_vitais_com_label.txt', 
                    header=None, 
                    delimiter=',', 
                    usecols=[3, 4, 5, 7], 
@@ -59,6 +59,8 @@ for file in files:
     clfs = []
 
     for ccp_alpha in ccp_alphas:
+        if criterion == "logloss":
+            criterion = "log_loss"
         clf = DecisionTreeClassifier(max_depth=model_max_depth, min_samples_leaf=model_min_samples, criterion=criterion, ccp_alpha=ccp_alpha)
         clf = clf.fit(X_train, y_train)
         clfs.append(clf)

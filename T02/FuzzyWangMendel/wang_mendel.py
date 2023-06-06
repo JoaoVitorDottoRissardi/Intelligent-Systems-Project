@@ -193,7 +193,7 @@ if(train_or_test == "train"):
 
     no_mf = int(sys.argv[2])
 
-    data = np.loadtxt('treino_sinais_vitais_com_label.txt', 
+    data = np.loadtxt('../treino_sinais_vitais_com_label.txt', 
                     delimiter=',', 
                     usecols=[3, 4, 5, 6, 7])
 
