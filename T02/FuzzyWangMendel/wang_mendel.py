@@ -122,8 +122,6 @@ class Wangmendel():
                 self.final_rules.append(rule)
                 alternative.append(rule[0:-2])
 
-        joblib.dump(self, 'wang_mendel_model.pkl')
-
         # print('final rules: ')
         # print('we have',len(self.final_rules),'non conflict and non duplicate rule' )
         # K=pd.DataFrame(self.final_rules)
@@ -225,6 +223,8 @@ if(train_or_test == "train"):
     wm.generate_rules()
     wm.get_results("train")
     wm.get_results("test")
+
+    joblib.dump(wm, 'wang_mendel_model.pkl')
 
 elif(train_or_test == "test"):
 
