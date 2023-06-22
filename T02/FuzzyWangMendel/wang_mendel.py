@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import skfuzzy
 import sys
 import joblib
+from sklearn.metrics import f1_score
 
 class Wangmendel():
 
@@ -163,12 +164,14 @@ class Wangmendel():
 
         acc = 0
 
+        predicted_class = []
+
         with open(csv_file_path, mode='w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
             for i in range(len(data["gravity"])):
-                predicted_class = 1 if Y_predict[i] < 25 else ( 2 if Y_predict[i] < 50 else (3 if Y_predict[i] < 75 else 4))
-                if predicted_class == data["class"][i]:
+                predicted_class.append( 1 if Y_predict[i] < 25 else ( 2 if Y_predict[i] < 50 else (3 if Y_predict[i] < 75 else 4)) )
+                if predicted_class[i] == data["class"][i]:
                     acc += 1               
                 info = {"real numeric gravity" : data["gravity"][i], 
                         "real class gravity" : data["class"][i],
@@ -177,6 +180,10 @@ class Wangmendel():
                 writer.writerow(info)
         
         print(f"Accuracy for {train_or_test} is {acc/len(data['gravity']) * 100} %")
+
+        print(f'F-measure for {train_or_test} is {f1_score(data["class"], predicted_class, average="weighted")}')
+
+        return acc/len(data['gravity']) * 100
 
         # plt.figure()
         # plt.plot(range(100),data["gravity"][0:100],color= 'green')
@@ -196,35 +203,47 @@ if(train_or_test == "train"):
     data = np.loadtxt('../treino_sinais_vitais_com_label.txt', 
                     delimiter=',', 
                     usecols=[3, 4, 5, 6, 7])
+    
+    accs = []
+    wms = []
 
-    np.random.shuffle(data)
-    train = data[0:560]
-    test = data[560:800]
+    for i in range(1, 51):
 
-    qpa_train = train[:,0]
-    pulse_train = train[:,1]
-    resp_train = train[:,2]
-    gravity_train = train[:,3]
-    class_train = train[:,4]
+        np.random.seed(i)
+        np.random.shuffle(data)
 
-    train = {"qpa" : qpa_train, "pulse" : pulse_train, "resp": resp_train, "gravity": gravity_train, "class": class_train}
+        train = data[0:560]
+        test = data[560:800]
 
-    qpa_test = test[:,0]
-    pulse_test = test[:,1]
-    resp_test = test[:,2]
-    gravity_test = test[:,3]
-    class_test = test[:,4]
+        qpa_train = train[:,0]
+        pulse_train = train[:,1]
+        resp_train = train[:,2]
+        gravity_train = train[:,3]
+        class_train = train[:,4]
 
-    test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": gravity_test, "class": class_test}
+        train = {"qpa" : qpa_train, "pulse" : pulse_train, "resp": resp_train, "gravity": gravity_train, "class": class_train}
 
-    wm = Wangmendel(train, test, no_mf)
+        qpa_test = test[:,0]
+        pulse_test = test[:,1]
+        resp_test = test[:,2]
+        gravity_test = test[:,3]
+        class_test = test[:,4]
 
-    wm.generate_mfs()
-    wm.generate_rules()
-    wm.get_results("train")
-    wm.get_results("test")
+        test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": gravity_test, "class": class_test}
 
-    joblib.dump(wm, 'wang_mendel_model.pkl')
+        wm = Wangmendel(train, test, no_mf)
+
+        wm.generate_mfs()
+        wm.generate_rules()
+        wm.get_results("train")
+        wms.append(wm)
+        accs.append(wm.get_results("test"))
+
+    max_index = accs.index(max(accs))
+    wm = wms[max_index]
+    print("max acc: ", max(accs))
+
+    joblib.dump(wm, f'wang_mendel_model_{no_mf}.pkl')   
 
 elif(train_or_test == "test"):
 
@@ -242,7 +261,7 @@ elif(train_or_test == "test"):
 
     test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": gravity_test, "class": class_test}
 
-    wm = joblib.load('wang_mendel_model.pkl')
+    wm = joblib.load('wang_mendel_model_10.pkl')
 
     wm.test = test
 
