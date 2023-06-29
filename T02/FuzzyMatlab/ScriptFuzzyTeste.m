@@ -1,0 +1,49 @@
+    
+    clear ; close all; clc
+    prompt = 'Digite o nome do arquivo de regras Fuzzy que deseja utilizar\n';
+    escolhaRegras = input(prompt, 's');
+    
+    opts = detectImportOptions('teste_cego_now.txt');
+    preview('teste_cego_now.txt',opts)
+    opts.SelectedVariableNames = [2 3 4];
+    fuzzy_inputs = readmatrix('teste_cego_now.txt', opts);
+
+    fis = readfis(escolhaRegras);
+
+    % Obtenha o número de saídas do sistema fuzzy
+    numOutputs = numel(fis.output);
+    % Crie uma matriz para armazenar os resultados das saídas
+    numDados = size(fuzzy_inputs, 1);
+    resultados = zeros(numDados, numOutputs);
+    % Itere sobre os dados
+    for i = 1:numDados
+        % Armazene os resultados das saídas
+        resultados(i, :) = evalfis(fuzzy_inputs(i, 1:3), fis);
+    end
+    % Exiba os resultados
+    % disp(resultados);
+
+    comparacao = 0;
+    resultados2 = zeros(numDados, numOutputs);
+
+    for j = 1:numDados
+        if(resultados(j)<25 && resultados(j)>0)
+            resultados2(j) =1;
+        elseif(resultados(j)<50)
+            resultados2(j) =2;
+        elseif(resultados(j)<75)
+            resultados2(j) =3;       
+        elseif(resultados(j)<100)
+            resultados2(j) =4;
+        end
+    end
+    
+    % Create a table with the data and variable names
+    %T = table(fuzzy_inputs(:,1), fuzzy_inputs(:,2), fuzzy_inputs(:,3), resultados, resultados2, 'VariableNames', { 'Pressão', 'Batimentos', 'Respiração', 'Resultados', 'Classe Fuzzy'});
+    T = table(resultados2);
+
+    % Write data to text file
+    writetable(T, 'ResultadosFuzzyTeste.txt', 'WriteVariableNames',false);
+    
+    disp("Os resultados foram gerados no arquivo: ResultadosFuzzyTeste.txt");
+

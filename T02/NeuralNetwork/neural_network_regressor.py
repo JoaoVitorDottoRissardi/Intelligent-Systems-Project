@@ -30,17 +30,17 @@ y_train = y
 
 solver = ["sgd"]
 activation = ["relu", "logistic", "tanh"]
-momentum = [0.9]
-tol = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+momentum = [0.92]
+tol = [1e-4, 1e-5, 1e-6]
 learning_rate = ['constant', 'adaptive', 'invscaling']
-learning_rate_init = [1e-3, 5e-4, 1e-4]
+learning_rate_init = [9e-4, 4e-4, 7e-5, 3e-3]
 alpha = [1e-4]
 # random_state = [5, 10, 15, 20, 25]
-max_iter = [300000]
-n_iter_no_change = [20, 200, 2000]
+max_iter = [20000]
+n_iter_no_change = [150, 500, 1000]
 verbose = [False]
 early_stopping = [True, False]
-hidden_layer_sizes = [(10, 10, 10), (50, 40, 20, 10), (10, 5, 5), (8, 9, 10), (20, 25, 15), (25, 30, 5), (15, 30), (15, 15, 15, 15)]
+hidden_layer_sizes = [(20, 20, 20), (25, 20, 14), (14, 20, 25)]
 
 grid = dict(activation = activation, 
             tol = tol, 
@@ -52,86 +52,16 @@ grid = dict(activation = activation,
             verbose = verbose,
             solver = solver)
 
-model = MLPRegressor()
+# model = MLPRegressor()
 
-cvFold = RepeatedKFold(n_splits=10, n_repeats=4)
-gridSearch = RandomizedSearchCV(estimator=model, param_distributions=grid, n_jobs=8, cv=cvFold, scoring="neg_mean_squared_error")
+# cvFold = RepeatedKFold(n_splits=10, n_repeats=3)
+# gridSearch = RandomizedSearchCV(estimator=model, param_distributions=grid, n_jobs=3, cv=cvFold, scoring="neg_mean_squared_error")
 
-searchResults = gridSearch.fit(X_trainscaled, y)
+# searchResults = gridSearch.fit(X_trainscaled, y)
 
-bestModel = searchResults.best_estimator_
+# bestModel = searchResults.best_estimator_
 
-joblib.dump(bestModel, "bestmodel.pkl")
-
-test_file = sys.argv[1]
-
-data = pd.read_csv(test_file, 
-                   header=None, 
-                   delimiter=',', 
-                   usecols=[3, 4, 5, 6], 
-                   names=['qPA', 'pulso', 'resp', 'gravidade'])
-
-feature_cols = ['qPA', 'pulso', 'resp']
-
-X = data.iloc[:, :-1]
-y = data.iloc[:, -1]
-
-X_scaled = sc_X.fit_transform(X)
-
-pred = bestModel.predict(X_scaled)
-
-test_set_rmse = np.sqrt(mean_squared_error(y, pred))
-
-print('RMSE: ', test_set_rmse)
-print('Score: ', bestModel.score(X_scaled, y))
-
-pred = bestModel.predict(X_trainscaled)
-
-test_set_rmse = np.sqrt(mean_squared_error(y_train, pred))
-
-print('RMSE: ', test_set_rmse)
-print('Score: ', bestModel.score(X_scaled, y))
-
-
-print("Params: ", bestModel.get_params())
-
-
-# nn = MLPRegressor(
-#     activation='relu',
-#     solver='sgd',
-#     hidden_layer_sizes=(500, 100, 10),
-#     alpha=0.0001,
-#     verbose=True,
-#     early_stopping=True,
-#     learning_rate='constant',
-#     learning_rate_init=0.0005,
-#     max_iter=30000,
-#     tol=1e-7,
-#     n_iter_no_change=10000
-# )
-
-# nn.fit(X_trainscaled, y_train)
-
-# joblib.dump(nn, 'nn7.pkl')
-
-
-# #nn = joblib.load('bestmodel.pkl')
-
-# pred = nn.predict(X_testscaled)
-
-# test_set_rsquared = r2_score(y_test, pred)
-# test_set_rmse = np.sqrt(mean_squared_error(y_test, pred))
-
-# print('R_squared value: ', test_set_rsquared)
-# print('RMSE: ', test_set_rmse)
-
-# pred = nn.predict(X_trainscaled)
-
-# test_set_rsquared = r2_score(y_train, pred)
-# test_set_rmse = np.sqrt(mean_squared_error(y_train, pred))
-
-# print('R_squared value: ', test_set_rsquared)
-# print('RMSE: ', test_set_rmse)
+# joblib.dump(bestModel, "bestmodel.pkl")
 
 # test_file = sys.argv[1]
 
@@ -148,8 +78,81 @@ print("Params: ", bestModel.get_params())
 
 # X_scaled = sc_X.fit_transform(X)
 
-# pred = nn.predict(X_scaled)
+# pred = bestModel.predict(X_scaled)
 
 # test_set_rmse = np.sqrt(mean_squared_error(y, pred))
+
 # print('RMSE: ', test_set_rmse)
-# print(nn.score(X_scaled, y))
+# print('Score: ', bestModel.score(X_scaled, y))
+
+# pred = bestModel.predict(X_trainscaled)
+
+# test_set_rmse = np.sqrt(mean_squared_error(y_train, pred))
+
+# print('RMSE: ', test_set_rmse)
+# print('Score: ', bestModel.score(X_scaled, y))
+
+
+# print("Params: ", bestModel.get_params())
+
+#-------------------------------------------------------------------------
+nn = MLPRegressor(
+    activation='tanh',
+    solver='sgd',
+    hidden_layer_sizes=(20, 20, 20),
+    alpha=0.0001,
+    verbose=False,
+    early_stopping=False,
+    learning_rate='constant',
+    learning_rate_init=0.00007,
+    max_iter=30000,
+    tol=1e-5,
+    n_iter_no_change=1000
+)
+
+nn.fit(X_trainscaled, y_train)
+
+joblib.dump(nn, 'modelo6.pkl')
+
+
+#nn = joblib.load('bestmodel.pkl')
+
+pred = nn.predict(X_testscaled)
+
+test_set_rsquared = r2_score(y_test, pred)
+test_set_rmse = np.sqrt(mean_squared_error(y_test, pred))
+
+print("=== Treino ===")
+print('R_squared value: ', test_set_rsquared)
+print('RMSE: ', test_set_rmse)
+
+pred = nn.predict(X_trainscaled)
+
+test_set_rsquared = r2_score(y_train, pred)
+test_set_rmse = np.sqrt(mean_squared_error(y_train, pred))
+
+print("=== Validação ===")
+print('R_squared value: ', test_set_rsquared)
+print('RMSE: ', test_set_rmse)
+
+test_file = sys.argv[1]
+
+data = pd.read_csv(test_file, 
+                   header=None, 
+                   delimiter=',', 
+                   usecols=[3, 4, 5, 6], 
+                   names=['qPA', 'pulso', 'resp', 'gravidade'])
+
+feature_cols = ['qPA', 'pulso', 'resp']
+
+X = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+
+X_scaled = sc_X.fit_transform(X)
+
+pred = nn.predict(X_scaled)
+
+test_set_rmse = np.sqrt(mean_squared_error(y, pred))
+print("=== Dados do Thiago ===")
+print('R_squared value: ', nn.score(X_scaled, y))
+print('RMSE: ', test_set_rmse)
