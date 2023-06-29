@@ -10,6 +10,8 @@ import sys
 import joblib
 from sklearn.metrics import f1_score
 
+#==================================== CLASS DEFINITION : IGNORE =======================================================
+
 class Wangmendel():
 
     def __init__(self, train, test, no_mf):
@@ -192,78 +194,57 @@ class Wangmendel():
         # plt.show()    
         # print(f'the {train_or_test} error is :',mse)
 
+#========================================================= CODE STARTS HERE ===============================================================
 
-#Load data
+file_name = sys.argv[1]
 
-train_or_test = sys.argv[1]
+data = np.loadtxt(file_name, 
+                delimiter=',', 
+                usecols=[1, 2, 3])
 
-if(train_or_test == "train"):
+qpa_test = data[:,0]
+pulse_test = data[:,1]
+resp_test = data[:,2]
 
-    no_mf = int(sys.argv[2])
+test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": [], "class": []}
 
-    data = np.loadtxt('../treino.txt', 
-                    delimiter=',', 
-                    usecols=[3, 4, 5, 6, 7])
+wm = joblib.load('wang_mendel_model_best.pkl')
+
+wm.test = test
+
+data = test
+
+rules = np.array(wm.final_rules, dtype=int)
+
+Y_predict = []
+
+for i in range(len(data["qpa"])):
+
+    list_qpa, list_pulse, list_resp = [], [], []
+
+    for j in range(len(wm.gravity_mf)):
+        list_qpa.append(skfuzzy.interp_membership(wm.qpa_range, wm.qpa_mf[j], data["qpa"][i]))
+        list_pulse.append(skfuzzy.interp_membership(wm.pulse_range, wm.pulse_mf[j], data["pulse"][i]))
+        list_resp.append(skfuzzy.interp_membership(wm.resp_range, wm.resp_mf[j], data["resp"][i]))
     
-    accs = []
-    wms = []
+    var1, var2 = 0, 0
+    for k in range(len(rules)):
+        var1 += list_qpa[rules[k][0]] * list_pulse[rules[k][1]] * list_resp[rules[k][2]] * wm.center[rules[k][3]]
+        var2 += list_qpa[rules[k][0]] * list_pulse[rules[k][1]] * list_resp[rules[k][2]]
+    if var2 == 0:
+        Y_predict.append(0)
+    else:
+        Y_predict.append(var1/var2)
 
-    for i in range(1, 51):
+predicted_class = []
 
-        np.random.seed(i)
-        np.random.shuffle(data)
+for i in range(len(data["qpa"])):
+    predicted_class.append( 1 if Y_predict[i] < 25 else ( 2 if Y_predict[i] < 50 else (3 if Y_predict[i] < 75 else 4)) )
 
-        train = data[0:560]
-        test = data[560:800]
+for _class in predicted_class:
+    print(_class)
 
-        qpa_train = train[:,0]
-        pulse_train = train[:,1]
-        resp_train = train[:,2]
-        gravity_train = train[:,3]
-        class_train = train[:,4]
+with open('../Results/Wang_Mendel_results.txt', 'w') as file:
+    for value in predicted_class:
+        file.write(str(value) + '\n')
 
-        train = {"qpa" : qpa_train, "pulse" : pulse_train, "resp": resp_train, "gravity": gravity_train, "class": class_train}
-
-        qpa_test = test[:,0]
-        pulse_test = test[:,1]
-        resp_test = test[:,2]
-        gravity_test = test[:,3]
-        class_test = test[:,4]
-
-        test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": gravity_test, "class": class_test}
-
-        wm = Wangmendel(train, test, no_mf)
-
-        wm.generate_mfs()
-        wm.generate_rules()
-        wm.get_results("train")
-        wms.append(wm)
-        accs.append(wm.get_results("test"))
-
-    max_index = accs.index(max(accs))
-    wm = wms[max_index]
-    print("max acc: ", max(accs))
-
-    joblib.dump(wm, f'wang_mendel_model_{no_mf}.pkl')   
-
-elif(train_or_test == "test"):
-
-    file_name = sys.argv[2]
-
-    data = np.loadtxt(file_name, 
-                    delimiter=',', 
-                    usecols=[3, 4, 5, 6, 7])
-    
-    qpa_test = data[:,0]
-    pulse_test = data[:,1]
-    resp_test = data[:,2]
-    gravity_test = data[:,3]
-    class_test = data[:,4]
-
-    test = {"qpa" : qpa_test, "pulse" : pulse_test, "resp": resp_test, "gravity": gravity_test, "class": class_test}
-
-    wm = joblib.load('wang_mendel_model_10.pkl')
-
-    wm.test = test
-
-    wm.get_results("test")
