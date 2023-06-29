@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RepeatedKFold, GridSearchCV
 from sklearn import metrics
 from graphviz import Source
 from sklearn.tree import export_graphviz
@@ -17,7 +17,7 @@ import csv
 option = sys.argv[1]
 
 #Load data
-data = pd.read_csv('../treino_sinais_vitais_com_label.txt', 
+data = pd.read_csv('../treino.txt', 
                    header=None, 
                    delimiter=',', 
                    usecols=[3, 4, 5, 7], 
@@ -34,7 +34,7 @@ if(option == "all"):
 
     #Split data
 
-    csv_file_path = 'id3_trees.csv' 
+    csv_file_path = 'CART_trees.csv' 
 
     fieldnames = ["model_index", "random_state", "max_depth", "criterion", "min_samples_leaf", "accuracy", 
                 "precision_class_1", "precision_class_2", "precision_class_3", "precision_class_4", "average precision", 
@@ -63,9 +63,9 @@ if(option == "all"):
                         precision = metrics.precision_score(y_test, y_pred, average=None, zero_division=0)
                         recall = metrics.recall_score(y_test,y_pred, average=None, zero_division=0)
                         f_measure = [(2 * p * r)/(p + r) if (p!=0 and r!=0) else 0 for p, r in zip(precision, recall)]
-                        average_precision = sum(precision) / float(len(precision))
-                        average_recall = sum(recall) / float(len(recall))
-                        average_f_measure = sum(f_measure) / float(len(f_measure))
+                        average_precision = metrics.precision_score(y_test, y_pred, average='weighted', zero_division=0)
+                        average_recall = metrics.recall_score(y_test,y_pred, average='weighted', zero_division=0)
+                        average_f_measure = metrics.f1_score(y_test, y_pred, average='weighted')
                         #Write to csv
                         tree_infomation = {"model_index" : model_index,
                                         "random_state": random_state,
@@ -100,7 +100,7 @@ if(option == "all"):
     
     # # Export .dot image
     # PROJECT_ROOT_DIR = "."
-    # DATA_DIR = "id3_dot_images"
+    # DATA_DIR = "CART_dot_images"
     # FILE_NAME = "model_" + str(max_depth) + "_" + str(min_samples) + "_" + criterion + ".pkl"
 
     # def image_path(fig_id):
@@ -120,7 +120,7 @@ if(option == "all"):
     # #Print confirmation and save model
 
     # print("Nice!")
-    # joblib.dump(clf, "id3_models/" +FILE_NAME)
+    # joblib.dump(clf, "CART_models/" +FILE_NAME)
 
     # Plot ROC curves
 
@@ -158,7 +158,7 @@ if(option == "all"):
 
 elif(option == "selected"):
 
-    choosen_models = joblib.load('id3_models.pkl')
+    choosen_models = joblib.load('CART_models.pkl')
 
     # Save model
     for model in choosen_models:
@@ -166,5 +166,46 @@ elif(option == "selected"):
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=model["random_state"])
         clf = DecisionTreeClassifier(max_depth=model["max_depth"], min_samples_leaf=model["min_samples_leaf"], criterion=model["criterion"])
         clf = clf.fit(x_train, y_train) 
-        FILE_NAME = "model_" + str(model["max_depth"]) + "_" + str(model["min_samples_leaf"]) + "_" + model["criterion"].replace("_", "") + "_" + str(model["model_index"]) +  ".pkl"
-        joblib.dump(clf, "id3_models/" + FILE_NAME)
+        FILE_NAME = "model_" + str(model["model_index"])  +  ".pkl"
+        joblib.dump(clf, "CART_models/" + FILE_NAME)
+
+            # Export .dot image
+        PROJECT_ROOT_DIR = "."
+        DATA_DIR = "CART_dot_images"
+        FILE_NAME = "model_" + str(model["model_index"]) + ".pkl"
+
+        def image_path(fig_id):
+            return os.path.join(PROJECT_ROOT_DIR, DATA_DIR, fig_id)
+
+        export_graphviz(
+                clf,
+                out_file=image_path(f"{FILE_NAME}.dot"),
+                feature_names=feature_cols,
+                class_names=['1', '2', '3', '4'],
+                rounded=True,
+                filled=True
+        )
+
+        Source.from_file(image_path(f"{FILE_NAME}.dot"))
+
+
+elif(option == "grid_search"):
+
+    model = DecisionTreeClassifier()
+
+    max_depth = [i for i in range(1,21)]
+    min_samples_leaf = [i for i in range(10, 21)]
+    criterion = ['entropy', 'gini', 'log_loss']
+
+    grid = dict(max_depth = max_depth, 
+                min_samples_leaf = min_samples_leaf, 
+                criterion = criterion)
+
+    cvFold = RepeatedKFold(n_splits=10, n_repeats=10)
+    gridSearch = GridSearchCV(estimator=model, param_grid=grid, n_jobs=8, cv=cvFold, scoring=('accuracy', 'f1_weighted'), refit='accuracy')
+
+    searchResults = gridSearch.fit(x, y)
+
+    bestModel = searchResults.best_estimator_
+
+    joblib.dump(bestModel, "CART_models/model_best.pkl")

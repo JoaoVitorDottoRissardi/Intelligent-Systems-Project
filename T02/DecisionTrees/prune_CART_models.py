@@ -30,7 +30,7 @@ y = data.iloc[:, -1]
 
 #Get all models
 
-folder = "id3_models/"
+folder = "CART_models/"
 
 prefix = "model"
 

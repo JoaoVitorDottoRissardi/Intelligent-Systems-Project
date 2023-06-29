@@ -3,7 +3,7 @@ import joblib
 
 choosen_models = []
 
-data = pd.read_csv('id3_trees.csv')
+data = pd.read_csv('CART_trees.csv')
 
 column = data['accuracy']
 
@@ -48,6 +48,12 @@ print("\n Third Selection: ")
 
 third_selection = data[data['accuracy'] == selected_values[2]]
 
+#third_selection_2 = data[data['model_index'] == 121]
+
+#print(third_selection_2[['model_index', 'random_state', 'max_depth', 'min_samples_leaf','criterion','accuracy', 'average f_measure']])
+
+#choosen_models.append(third_selection_2.loc[:, ['model_index','random_state', 'max_depth', 'min_samples_leaf','criterion']].head(1))
+
 third_max_f_measure = third_selection['average f_measure'].max()
 
 third_selection = third_selection[third_selection['average f_measure'] == third_max_f_measure]
@@ -68,4 +74,4 @@ print(fourth_selection[['model_index', 'random_state', 'max_depth', 'min_samples
 
 choosen_models.append(fourth_selection.loc[:, ['model_index','random_state', 'max_depth', 'min_samples_leaf','criterion']].head(1))
 
-joblib.dump(choosen_models, 'id3_models.pkl')
+joblib.dump(choosen_models, 'CART_models.pkl')
