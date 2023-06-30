@@ -1,3 +1,12 @@
+# ==============================================
+# T02
+#
+# Sistemas Inteligentes - CSI30 - 2023/1
+# Turma S71
+# Jhonny Kristyan Vaz-Tostes de Assis - 2126672
+# João Vítor Dotto Rissardi - 2126699
+# ==============================================
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import joblib 

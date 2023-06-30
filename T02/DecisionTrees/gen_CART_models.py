@@ -1,3 +1,12 @@
+# ==============================================
+# T02
+#
+# Sistemas Inteligentes - CSI30 - 2023/1
+# Turma S71
+# Jhonny Kristyan Vaz-Tostes de Assis - 2126672
+# João Vítor Dotto Rissardi - 2126699
+# ==============================================
+
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split, RepeatedKFold, GridSearchCV
@@ -208,4 +217,4 @@ elif(option == "grid_search"):
 
     bestModel = searchResults.best_estimator_
 
-    joblib.dump(bestModel, "CART_models/model_best.pkl")
+    joblib.dump(bestModel, "CART_models/model_grid.pkl")

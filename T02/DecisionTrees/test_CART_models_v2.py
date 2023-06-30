@@ -1,19 +1,22 @@
+# ==============================================
+# T02
+#
+# Sistemas Inteligentes - CSI30 - 2023/1
+# Turma S71
+# Jhonny Kristyan Vaz-Tostes de Assis - 2126672
+# João Vítor Dotto Rissardi - 2126699
+# ==============================================
+
 import pandas as pd
- 
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.model_selection import train_test_split
 from sklearn import metrics
-from sklearn.preprocessing import LabelBinarizer 
-from graphviz import Source
-from sklearn.tree import export_graphviz
-import matplotlib.pyplot as plt
+# from sklearn.preprocessing import LabelBinarizer 
+# from graphviz import Source
+# from sklearn.tree import export_graphviz
+# import matplotlib.pyplot as plt
 import os
-import numpy as np
-from itertools import cycle
 import joblib 
-from itertools import repeat, chain
-import random
-import warnings
 import sys
 
 #Load data

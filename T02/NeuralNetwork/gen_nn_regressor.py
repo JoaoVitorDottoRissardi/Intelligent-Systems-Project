@@ -1,12 +1,21 @@
+# ==============================================
+# T02
+#
+# Sistemas Inteligentes - CSI30 - 2023/1
+# Turma S71
+# Jhonny Kristyan Vaz-Tostes de Assis - 2126672
+# João Vítor Dotto Rissardi - 2126699
+# ==============================================
+
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RepeatedKFold, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVR
+# from sklearn.svm import SVR
 import pandas as pd
 import numpy as np
 import joblib
-import sys
+# import sys
 
 data = pd.read_csv('../treino.txt', 
                    header=None, 
